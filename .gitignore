@@ -1,0 +1,17 @@
+# Dados locais da Chácara — nunca versionar
+*.csv
+*.CSV
+*.xls
+*.xlsx
+*.XLS
+*.XLSX
+*.json
+*.dat
+*.dpb
+*.txt
+*.TXT
+*.zip
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
