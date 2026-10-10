@@ -63,6 +63,7 @@ const sectionLabel = {
   agenda: 'Agenda de Eventos',
   historico: 'Histórico de Atividades',
   maquinas: 'Revisão de Máquinas',
+  ordenha: 'Manutenção da Ordenha',
   configuracoes: 'Configurações'
 };
 
