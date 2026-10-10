@@ -5,6 +5,7 @@ import {
   collection,
   doc,
   getDoc,
+  getDocs,
   addDoc,
   onSnapshot,
   query,
@@ -24,6 +25,8 @@ let unsubscribe = null;
 let pendingId = null;
 let pendingStatus = null;
 let unsubscribeSettings = null;
+let unsubscribeNotes = null;
+let currentNotes = [];
 let settings = null;
 let optionEdit = { category: null, id: null };
 let settingsWarning = '';
@@ -136,9 +139,9 @@ const SETTING_GROUPS=[
 const DEFAULT_SETTINGS={
   setores:['Ordenha','Pátio e Acessos','Manutenção Máquinas','Manutenção Equipamentos','Confinamento','Escritório','Farmácia','Lavanderia','Alimentação','Sala do Tanque','Outros'],
   responsaveis:['Gilberto','Teodoro','Marília','Funcionário'],
-  tipos:['Ocorrência','Tarefa','Evento']
+  tipos:['Ocorrência','Tarefa','Evento','Rotina']
 };
-const PROTECTED_TYPES=new Set(['Ocorrência','Evento']);
+const PROTECTED_TYPES=new Set(['Ocorrência','Evento','Rotina']);
 const configDoc=()=>doc(db,'configuracoes','opcoes');
 const normalizedName=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLocaleLowerCase('pt-BR');
 const isProtected=(key,entry)=>key==='tipos'&&PROTECTED_TYPES.has(entry.nome);
@@ -167,7 +170,7 @@ function renderFormOptions(){
   for(const [elementId,key] of [['sector','setores'],['assignee','responsaveis'],['type','tipos']]){
     const select=$(elementId);
     const selected=select.value;
-    const enabled=settings[key].filter(item=>item.ativo && (key!=='tipos'||role==='admin'||item.nome==='Ocorrência'));
+    const enabled=settings[key].filter(item=>item.ativo && (key!=='tipos'||role==='admin'||item.nome!=='Rotina'));
     select.replaceChildren();
     if(key==='responsaveis'){
       const empty=document.createElement('option');empty.value='';empty.textContent='Selecionar Responsável';select.append(empty);
@@ -284,23 +287,26 @@ $('optionForm').addEventListener('submit',async e=>{
 
 // Cada rotina semanal é armazenada uma única vez no Firestore.
 // As ocorrências de cada semana são calculadas para os dias visíveis.
-const isWeeklyRecurring=t=>t?.type==='Evento'&&t?.recurrence==='weekly';
+const isRecurring=t=>(t?.type==='Rotina'&&['daily','weekly','monthly'].includes(t?.recurrence))||(t?.type==='Evento'&&t?.recurrence==='weekly');
+const recurrenceLabel=t=>t?.recurrence==='daily'?'Todos os Dias':t?.recurrence==='monthly'?'Todo Mês':'Toda Semana';
 const weekDaysLong=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
 function weeklyDateText(date){
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(date||''))return 'Escolha a Data do Primeiro Evento.';
-  const [year,month,day]=date.split('-').map(Number);
-  const weekday=weekDaysLong[new Date(year,month-1,day,12).getDay()];
-  const prefix=weekday==='Domingo'||weekday==='Sábado'?'Todos os ':'Todas as ';
-  const plural=weekday.endsWith('-feira')?weekday.replace('-feira','s-feiras'):weekday+'s';
-  return 'Repete '+prefix+plural+($('dueTime').value?' às '+$('dueTime').value:'')+'.';
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(date||''))return 'Selecione a Data de Início da Rotina.';
+ const [y,m,d]=date.split('-').map(Number),day=weekDaysLong[new Date(y,m-1,d,12).getDay()],freq=$('repeatFrequency').value;
+ if(freq==='daily')return 'Repete Todos os Dias'+($('dueTime').value?' às '+$('dueTime').value:'')+'.';
+ if(freq==='monthly')return 'Repete Todo Mês a Partir do Dia '+d+($('dueTime').value?' às '+$('dueTime').value:'')+'.';
+ const plural=day.endsWith('-feira')?day.replace('-feira','s-feiras'):day+'s';
+ return 'Repete '+(day==='Domingo'||day==='Sábado'?'Todos os ':'Todas as ')+plural+($('dueTime').value?' às '+$('dueTime').value:'')+'.';
 }
 function toggleEventRepetition(){
-  const isEvent=$('type').value==='Evento';
-  $('eventRepeatArea').hidden=!isEvent;
-  if(!isEvent){$('repeatFrequency').value='none';$('repeatUntil').value=''}
-  const weekly=isEvent&&$('repeatFrequency').value==='weekly';
-  $('repeatWeeklyDetails').hidden=!weekly;
-  if(weekly)$('repeatSummary').textContent=weeklyDateText($('dueDate').value);
+ const routine=$('type').value==='Rotina';
+ $('eventRepeatArea').hidden=!routine;
+ $('repeatUntil').required=routine;
+ $('dueDate').required=routine||$('type').value==='Evento';
+ $('dueDateLabel').textContent=routine?'Data de Início da Rotina *':'Prazo / Data do Evento';
+ if(!routine){$('repeatFrequency').value='weekly';$('repeatUntil').value=''}
+ $('repeatWeeklyDetails').hidden=!routine;
+ if(routine)$('repeatSummary').textContent=weeklyDateText($('dueDate').value);
 }
 $('type').addEventListener('change',toggleEventRepetition);
 $('repeatFrequency').addEventListener('change',toggleEventRepetition);
@@ -309,26 +315,27 @@ $('dueTime').addEventListener('change',toggleEventRepetition);
 const isDateKey=d=>/^\d{4}-\d{2}-\d{2}$/.test(String(d||''));
 const utcDateIndex=d=>{const [y,m,day]=d.split('-').map(Number);return Date.UTC(y,m-1,day)/86400000};
 function expandOccurrencesForDays(days){
-  const daily=Object.fromEntries(days.map(day=>[day,[]]));
-  const dayIndices=new Map(days.map(day=>[day,utcDateIndex(day)]));
-  for(const item of items){
-    const start=dateKey(item.dueAt);
-    if(!isDateKey(start))continue;
-    if(!isWeeklyRecurring(item)){
-      if(daily[start])daily[start].push({...item,occurrenceDate:start,occurrenceAt:item.dueAt});
-      continue;
-    }
-    if(item.status==='concluida')continue;
-    const startIndex=utcDateIndex(start);
-    const until=isDateKey(item.recurrenceUntil)?item.recurrenceUntil:'';
-    for(const day of days){
-      if(day<start||(until&&day>until))continue;
-      if((dayIndices.get(day)-startIndex)%7===0){
-        daily[day].push({...item,occurrenceDate:day,occurrenceAt:day+String(item.dueAt||'').slice(10)});
-      }
-    }
+ const daily=Object.fromEntries(days.map(day=>[day,[]])),indexes=new Map(days.map(day=>[day,utcDateIndex(day)]));
+ for(const item of items){
+  const start=dateKey(item.dueAt);
+  if(!isDateKey(start))continue;
+  if(!isRecurring(item)){
+   if(daily[start])daily[start].push({...item,occurrenceDate:start,occurrenceAt:item.dueAt});
+   continue;
   }
-  return daily;
+  if(item.status==='concluida')continue;
+  const startIndex=utcDateIndex(start),until=isDateKey(item.recurrenceUntil)?item.recurrenceUntil:'';
+  const [sy,sm,sd]=start.split('-').map(Number);
+  for(const day of days){
+   if(day<start||(until&&day>until))continue;
+   const delta=indexes.get(day)-startIndex,[y,m,d]=day.split('-').map(Number);
+   const match=item.recurrence==='daily'?delta>=0:
+     item.recurrence==='weekly'?delta>=0&&delta%7===0:
+     item.recurrence==='monthly'?(y-sy)*12+(m-sm)>=0&&d===Math.min(sd,new Date(y,m,0).getDate()):false;
+   if(match)daily[day].push({...item,occurrenceDate:day,occurrenceAt:day+String(item.dueAt||'').slice(10)});
+  }
+ }
+ return daily;
 }
 
 function eventType(task){return task.priority==='Crítica'?'critical':task.priority==='Urgente'?'urgent':''}
@@ -344,13 +351,13 @@ function summaryCard(task){
   return `<article class="task"><div><h3>${esc(capWords(task.title))}</h3><div class="chips">
    <span class="chip ${badge}">${esc(task.priority)}</span>
    <span class="chip ${done?'concluida':''}">${esc(stateLabel[task.status]||task.status)}</span>
-   <span class="chip">${esc(task.type)}</span>${isWeeklyRecurring(task)?'<span class="chip recurrence">↻ Toda Semana</span>':''}</div>
+   <span class="chip">${esc(task.type)}</span>${isRecurring(task)?'<span class="chip recurrence">↻ '+recurrenceLabel(task)+'</span>':''}</div>
    <div class="muted">${esc(task.sector)} · Responsável: ${esc(task.assignee||'Não Definido')} · ${esc(ptDate(task.dueAt))}</div>
    ${task.details?`<p class="muted">${esc(task.details)}</p>`:''}</div>
    <div class="actions">
    <button class="btn secondary icon-action icon-search" type="button" data-detail="${esc(task.id)}" title="Detalhes" aria-label="Detalhes">${UI_ICONS.search}</button>
-   ${!isWeeklyRecurring(task)&&task.status==="aberta"?`<button class="btn secondary" data-status="andamento" data-id="${esc(task.id)}">Iniciar</button>`:""}
-   ${!done&&!isWeeklyRecurring(task)?`<button class="btn icon-action icon-check" type="button" data-status="concluida" data-id="${esc(task.id)}" title="Concluir" aria-label="Concluir">${UI_ICONS.check}</button>`:""}
+   ${!isRecurring(task)&&task.status==="aberta"?`<button class="btn secondary" data-status="andamento" data-id="${esc(task.id)}">Iniciar</button>`:""}
+   ${!done&&!isRecurring(task)?`<button class="btn icon-action icon-check" type="button" data-status="concluida" data-id="${esc(task.id)}" title="Concluir" aria-label="Concluir">${UI_ICONS.check}</button>`:""}
    ${role==="admin"?`<button class="delete-button icon-action icon-delete" type="button" data-delete="${esc(task.id)}" title="Excluir" aria-label="Excluir">${UI_ICONS.delete}</button>`:""}
    </div></article>`;
 }
@@ -368,7 +375,7 @@ function renderCalendarNew(){
   for(let i=0;i<count;i++){
     const d=new Date(y,m,i-start+1),day=dayISO(d),events=(daily[day]||[]).sort((a,b)=>String(a.dueAt).localeCompare(String(b.dueAt)));
     const outside=d.getMonth()!==m;
-    const previews=events.slice(0,2).map(t=>`<span class="calendar-event ${eventType(t)} ${isWeeklyRecurring(t)?'recurring':''}">${esc(capWords(t.title))}</span>`).join('');
+    const previews=events.slice(0,2).map(t=>`<span class="calendar-event ${eventType(t)} ${isRecurring(t)?'recurring':''}">${esc(capWords(t.title))}</span>`).join('');
     const dots=events.slice(0,3).map(t=>`<span class="calendar-dot ${eventType(t)}"></span>`).join('');
     cells.push(`<button type="button" class="calendar-day ${outside?'outside':''} ${day===selectedDay?'selected':''} ${day===now?'today':''}" data-day="${day}" data-outside="${outside}" aria-pressed="${day===selectedDay}"><span class="calendar-number">${d.getDate()}</span>${previews}${events.length>2?`<span class="calendar-more">+${events.length-2} Mais</span>`:''}<span class="calendar-dots">${dots}</span></button>`);
   }
@@ -377,8 +384,8 @@ function renderCalendarNew(){
   $('selectedDateTitle').textContent=weekNames[date.getDay()]+', '+dd+' de '+monthNames[date.getMonth()]+' de '+yy;
   const dailyEvents=(daily[selectedDay]||[]).sort((a,b)=>String(a.dueAt).localeCompare(String(b.dueAt)));
   $('selectedDateCount').textContent=dailyEvents.length+' '+(dailyEvents.length===1?'Atividade Programada':'Atividades Programadas');
-  $('addCalendarEvent').classList.toggle('auth-hidden',role!=='admin');
-  $('agendaList').innerHTML=dailyEvents.length?dailyEvents.map(t=>`<button type="button" class="agenda-entry ${eventType(t)}" data-detail="${esc(t.id)}" data-occurrence-date="${esc(t.occurrenceDate||'')}"><span class="mini">${esc((t.occurrenceAt||'').match(/T(\d{2}:\d{2})/)?.[1]||'Dia Inteiro')} · ${esc(t.type)} · ${esc(t.priority)}${isWeeklyRecurring(t)?'<span class="repeat-indicator"> · ↻ Toda Semana</span>':''}</span><b>${esc(capWords(t.title))}</b><span class="mini">${esc(t.sector)} · ${esc(stateLabel[t.status])}</span></button>`).join(''):'<div class="agenda-empty">Nenhuma Atividade para Este Dia.</div>';
+  $('addCalendarEvent').classList.remove('auth-hidden');
+  $('agendaList').innerHTML=dailyEvents.length?dailyEvents.map(t=>`<button type="button" class="agenda-entry ${eventType(t)}" data-detail="${esc(t.id)}" data-occurrence-date="${esc(t.occurrenceDate||'')}"><span class="mini">${esc((t.occurrenceAt||'').match(/T(\d{2}:\d{2})/)?.[1]||'Dia Inteiro')} · ${esc(t.type)} · ${esc(t.priority)}${isRecurring(t)?'<span class="repeat-indicator"> · ↻ '+recurrenceLabel(t)+'</span>':''}</span><b>${esc(capWords(t.title))}</b><span class="mini">${esc(t.sector)} · ${esc(stateLabel[t.status])}</span></button>`).join(''):'<div class="agenda-empty">Nenhuma Atividade para Este Dia.</div>';
 }
 
 function renderListsNew(){
@@ -407,12 +414,12 @@ function renderAllNew(){renderListsNew();renderCalendarNew()}
 function openEditorNew(type,date){
   renderFormOptions();
   $('taskForm').reset();
-  $('repeatFrequency').value='none';
+  $('repeatFrequency').value='weekly';
   $('repeatUntil').value='';
-  $('type').querySelectorAll('option').forEach(o=>o.disabled=role!=='admin'&&o.value!=='Ocorrência');
+  $('type').querySelectorAll('option').forEach(o=>o.disabled=role!=='admin'&&o.value==='Rotina');
   $('type').value=type||'Ocorrência';$('dueDate').value=date||'';
   toggleEventRepetition();
-  $('editorTitle').textContent=type==='Evento'?'Novo Evento':'Nova Tarefa ou Ocorrência';
+  $('editorTitle').textContent=type==='Evento'?'Novo Evento':type==='Rotina'?'Nova Rotina':'Nova Tarefa ou Ocorrência';
   modal('editor',true);
 }
 
@@ -420,15 +427,15 @@ function showDetailNew(id,occurrenceDate=''){
   const t=items.find(x=>x.id===id);if(!t)return;
   viewId=id;
   $('detailTitle').textContent=capWords(t.title);
-  const values=[['Tipo',t.type],['Status',stateLabel[t.status]||t.status],['Prioridade',t.priority],['Setor',t.sector],['Responsável',t.assignee||'Não Definido'],['Data e Horário',ptDate(occurrenceDate&&isWeeklyRecurring(t)?occurrenceDate+String(t.dueAt).slice(10):t.dueAt)],...(isWeeklyRecurring(t)?[['Repetição','Toda Semana'],['Término da Repetição',t.recurrenceUntil?ptDate(t.recurrenceUntil):'Sem Data Final']]:[])];
-  $('detailContent').innerHTML=(isWeeklyRecurring(t)?'<p class="recurrence-explanation">↻ Evento Semanal. A Exclusão Remove Todas as Próximas Ocorrências.</p>':'')+'<div class="detail-grid">'+values.map(([a,b])=>'<div><strong>'+esc(a)+'</strong><span>'+esc(b)+'</span></div>').join('')+'</div><strong>Detalhes</strong><div class="detail-note">'+esc(t.details||'Sem Detalhes Adicionais.')+'</div>';
+  const values=[['Tipo',t.type],['Status',stateLabel[t.status]||t.status],['Prioridade',t.priority],['Setor',t.sector],['Responsável',t.assignee||'Não Definido'],['Data e Horário',ptDate(occurrenceDate&&isRecurring(t)?occurrenceDate+String(t.dueAt).slice(10):t.dueAt)],...(isRecurring(t)?[['Repetição',recurrenceLabel(t)],['Fim da Repetição',t.recurrenceUntil?ptDate(t.recurrenceUntil):'Sem Data Final']]:[])];
+  $('detailContent').innerHTML=(isRecurring(t)?'<p class="recurrence-explanation">↻ Atividade Recorrente. A Exclusão Remove Toda a Série.</p>':'')+'<div class="detail-grid">'+values.map(([a,b])=>'<div><strong>'+esc(a)+'</strong><span>'+esc(b)+'</span></div>').join('')+'</div><strong>Detalhes</strong><div class="detail-note">'+esc(t.details||'Sem Detalhes Adicionais.')+'</div>';
   $('openDelete').classList.toggle('auth-hidden',role!=='admin');modal('detail',true)
 }
 
 function confirmDeleteNew(id){
   if(role!=='admin'){toast('A Exclusão é Restrita ao Administrador.');return}
   const t=items.find(x=>x.id===id);if(!t)return;
-  deleteId=id;$('deleteDescription').textContent=t.type+': '+capWords(t.title)+' — '+(stateLabel[t.status]||t.status)+(isWeeklyRecurring(t)?' — A Série Semanal Inteira Será Excluída.':'');modal('deleteConfirm',true);
+  deleteId=id;$('deleteDescription').textContent=t.type+': '+capWords(t.title)+' — '+(stateLabel[t.status]||t.status)+(isRecurring(t)?' — Toda a Série de Repetições Será Excluída.':'');modal('deleteConfirm',true);
 }
 
 async function deleteNowNew(){
@@ -461,7 +468,7 @@ $('calendarNext').onclick=()=>{monthCursor=new Date(monthCursor.getFullYear(),mo
 
 $('calendarToday').onclick=()=>{const d=new Date();selectedDay=dayISO(d);monthCursor=new Date(d.getFullYear(),d.getMonth(),1);renderCalendarNew()};
 
-$('addCalendarEvent').onclick=()=>{if(role==='admin')openEditorNew('Evento',selectedDay)};
+$('addCalendarEvent').onclick=()=>openEditorNew('Evento',selectedDay);
 
 $('calendarGrid').onclick=e=>{const b=e.target.closest('[data-day]');if(!b)return;selectedDay=b.dataset.day;if(b.dataset.outside==='true'){const [y,m]=selectedDay.split('-').map(Number);monthCursor=new Date(y,m-1,1)}renderCalendarNew()};
 
@@ -479,21 +486,22 @@ $('taskForm').onsubmit = async function(event){
   if(time&&!date){toast('Informe a Data Antes do Horário.');return}
   if($('type').value==='Evento'&&!date){toast('Informe A Data Do Evento.');return}
   const data={title:capWords($('title').value),type:$('type').value,priority:$('priority').value,sector:$('sector').value,assignee:$('assignee').value,dueAt:date?(time?date+'T'+time:date):'',details:$('details').value.trim(),status:'aberta',createdByUid:user.uid,createdByEmail:user.email,createdAt:serverTimestamp(),updatedAt:serverTimestamp()};
-  const weekly=data.type==='Evento'&&$('repeatFrequency').value==='weekly';
-  if(weekly){
-    if(!date){toast('Escolha a Data do Primeiro Evento da Série.');return}
+  if(data.type==='Rotina'){
+    if(role!=='admin'){toast('Apenas Administradores Podem Criar Rotinas.');return}
+    if(!date){toast('Informe a Data de Início da Rotina.');return}
     const until=$('repeatUntil').value;
-    if(until&&until<date){toast('A Data Final Não Pode Ser Anterior ao Primeiro Evento.');return}
-    data.recurrence='weekly';
+    if(!until||until<date){toast('Informe a Data de Fim da Rotina Igual ou Posterior ao Início.');return}
+    data.recurrence=$('repeatFrequency').value;
+    if(!['daily','weekly','monthly'].includes(data.recurrence)){toast('Frequência Inválida.');return}
     data.recurrenceUntil=until;
   }
   if(!settings.tipos.some(x=>x.ativo&&x.nome===data.type)||!settings.setores.some(x=>x.ativo&&x.nome===data.sector)){toast('Selecione Um Tipo e Setor Ativos nas Configurações.');return}
   if(data.assignee&&!settings.responsaveis.some(x=>x.ativo&&x.nome===data.assignee)){toast('Selecione Um Responsável Ativo.');return}
   if(!data.title)return;
-  if(role!=='admin'&&data.type!=='Ocorrência'){toast('Apenas Administradores Podem Criar Tarefas e Eventos.');return}
+  if(role!=='admin'&&data.type==='Rotina'){toast('Apenas Administradores Podem Criar Rotinas.');return}
   $('saveTask').disabled=true;
   try{await addDoc(collection(db,'tarefas'),data);modal('editor',false);
-    if(date&&data.type==='Evento'){const [y,m]=date.split('-').map(Number);selectedDay=date;monthCursor=new Date(y,m-1,1);document.querySelector('[data-page="agenda"]').click()}
+    if(date&&['Evento','Rotina'].includes(data.type)){const [y,m]=date.split('-').map(Number);selectedDay=date;monthCursor=new Date(y,m-1,1);document.querySelector('[data-page="agenda"]').click()}
     toast('Atividade Registrada com Sucesso.');
   }catch(error){console.error(error);toast('Falha ao Registrar: '+(error.code||error.message))}
   finally{$('saveTask').disabled=false}
@@ -620,7 +628,7 @@ if (!cfg?.apiKey || !cfg?.projectId) {
       $('roleLabel').textContent = role === 'admin' ? 'Administrador' : 'Operador';
       $('roleInfo').textContent = role === 'admin'
         ? 'Administrador: Pode Registrar Eventos, Tarefas e Ocorrências.'
-        : 'Operador: Pode Registrar Ocorrências e Concluir Atividades.';
+        : 'Operador: Pode Cadastrar Atividades e Eventos, Adicionar Notas e Concluir Chamados. Rotinas São Exclusivas da Administração.';
       $('login').classList.add('hidden');
       $('app').classList.remove('hidden');
 
