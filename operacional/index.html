@@ -443,6 +443,23 @@ main{padding:18px 20px 26px}
 .component-history-item p{margin:2px 0 0;grid-column:1/-1;white-space:pre-wrap;color:#728575}
 @media(max-width:1200px){.component-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.component-cards{grid-template-columns:1fr}}
+
+/* Administração de componentes e exclusões de registros feitos por engano. */
+.component-manage-actions{display:flex;gap:7px;flex-wrap:wrap}
+.component-manage-actions .btn{padding:9px 11px;font-size:12px}
+.review-delete{width:32px;height:32px;min-width:32px;display:inline-flex;align-items:center;justify-content:center;
+  background:#fff2ef;border:1px solid #eac6c2;border-radius:9px;color:#a53d36;font-size:21px;line-height:1;
+  cursor:pointer;margin-left:auto}
+.review-delete:hover{background:#fce4df}
+.review-delete:focus-visible{outline:2px solid #b64b3a;outline-offset:2px}
+.oil-history-item{position:relative;grid-template-columns:minmax(0,1fr) auto auto}
+.oil-history-item .review-delete{grid-column:3;grid-row:1/3;align-self:center}
+.milk-history-row{grid-template-columns:minmax(0,1fr) auto auto}
+.milk-history-row .review-delete{grid-column:3;grid-row:1/3;align-self:center}
+.component-history-item{grid-template-columns:minmax(0,1fr) auto auto}
+.component-history-item .review-delete{grid-column:3;grid-row:1/3;align-self:center}
+.component-actions .review-delete{flex:0 0 auto}
+@media(max-width:700px){.component-manage-actions{width:100%}.component-manage-actions .btn{flex:1}}
 </style>
 </head>
 <body>
@@ -599,7 +616,11 @@ main{padding:18px 20px 26px}
 
 <div class="component-block">
 <div class="machine-heading"><div><h3>Trocas por Componente</h3>
-<p class="muted">Cada Componente Tem Sua Própria Data, Material, Histórico e Previsão. A Rotina Acima É Compartilhada.</p></div></div>
+<p class="muted">Cada Componente Tem Sua Própria Data, Material, Histórico e Previsão. A Rotina Acima É Compartilhada.</p></div>
+<div class="component-manage-actions">
+<button id="componentShowInactive" class="btn secondary" type="button" hidden>Mostrar Excluídos</button>
+<button id="componentCreate" class="btn" type="button" hidden>+ Adicionar Componente</button>
+</div></div>
 <div id="componentMessage" class="machine-hint" role="status">Carregando Componentes...</div>
 <div id="componentRoutine" class="component-routine">Carregando Rotina da Ordenha...</div>
 <div class="component-cards" id="componentCards"></div>
@@ -669,6 +690,7 @@ main{padding:18px 20px 26px}
 <h2 id="componentEditTitle">Configurar Componente</h2>
 <form id="componentEditForm">
 <div class="fields">
+<div class="field full"><label for="componentName">Nome do Componente *</label><input id="componentName" maxlength="100" required placeholder="Ex.: Mangueira de Pulsação"/></div>
 <div class="field"><label for="componentMaterial">Material *</label><select id="componentMaterial" required></select></div>
 <div class="field"><label for="componentInstalled">Data da Última Troca</label><input id="componentInstalled" type="date"/></div>
 <div class="field"><label for="componentLimitCycles">Limite de Ordenhas por Conjunto</label><input id="componentLimitCycles" type="number" min="1" step="1" placeholder="Conforme o Fabricante"/></div>
