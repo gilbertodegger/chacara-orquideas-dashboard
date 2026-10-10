@@ -6,6 +6,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  limit,
   addDoc,
   onSnapshot,
   query,
@@ -539,7 +540,16 @@ $('calendarGrid').onclick=e=>{const b=e.target.closest('[data-day]');if(!b)retur
 document.addEventListener('click',e=>{const d=e.target.closest('[data-detail]');if(d){showDetailNew(d.dataset.detail,d.dataset.occurrenceDate||'');return}const remove=e.target.closest('[data-delete]');if(remove){confirmDeleteNew(remove.dataset.delete);return}const b=e.target.closest('[data-status]');if(b){pendingId=b.dataset.id;pendingStatus=b.dataset.status;$('completeForm').reset();$('completeTitle').textContent=b.dataset.status==='concluida'?'Concluir Atividade':'Iniciar Atividade';
 const task=items.find(t=>t.id===pendingId);
 $('actionOriginalDescription').textContent=task?.details||'Sem Descrição Original.';
-$('actionRecentNotes').textContent=currentNotes.length&&viewId===pendingId?currentNotes.slice(-3).map(n=>(n.autor||n.createdByEmail||'Usuário')+': '+n.texto).join('\n'):'Consulte o Histórico Completo no Ícone de Detalhes.';
+$('actionRecentNotes').textContent='Carregando as Últimas Atualizações...';
+const actionTaskId=pendingId;
+getDocs(query(noteLogRef(actionTaskId),orderBy('createdAt','desc'),limit(5))).then(snapshot=>{
+  if(actionTaskId!==pendingId||!$('complete').classList.contains('show'))return;
+  const recent=snapshot.docs.map(doc=>doc.data());
+  $('actionRecentNotes').textContent=recent.length?recent.map(n=>(n.autor||n.createdByEmail||'Usuário')+' ('+formatNoteTime(n.createdAt)+'): '+n.texto).join('\n'):'Ainda Não Existem Notas Adicionais.';
+}).catch(error=>{
+  console.error(error);
+  $('actionRecentNotes').textContent='Não Foi Possível Carregar as Notas. Consulte o Histórico nos Detalhes.';
+});
 $('completionNoteLabel').textContent=b.dataset.status==='concluida'?'Solução / Nota de Conclusão':'Nota de Andamento (Opcional)';
 modal('complete',true)}});
 
