@@ -1,4 +1,5 @@
-// Configuração pública do app. Acesso restrito por Authentication e regras do Firestore.
+// Configuração pública do aplicativo Web no Firebase.
+// Não inclui senhas nem acesso de administrador. O acesso depende de Authentication + regras Firestore.
 window.CHACARA_FIREBASE_CONFIG = {
   apiKey: "AIzaSyDImFiiPUEmjmW5qFOEvn_4L0loQ8hhiow",
   authDomain: "chacara-orquideas.firebaseapp.com",
