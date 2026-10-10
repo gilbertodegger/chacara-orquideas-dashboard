@@ -55,7 +55,7 @@ const stateLabel = {
 
 const sectionLabel = {
   tarefas: 'Tarefas e Ocorrências',
-  agenda: 'Agenda De Eventos',
+  agenda: 'Agenda de Eventos',
   historico: 'Histórico de Atividades'
 };
 
@@ -129,7 +129,7 @@ function summaryCard(task){
    <span class="chip ${badge}">${esc(task.priority)}</span>
    <span class="chip ${done?'concluida':''}">${esc(stateLabel[task.status]||task.status)}</span>
    <span class="chip">${esc(task.type)}</span></div>
-   <div class="muted">${esc(task.sector)} · Responsável: ${esc(task.assignee||'Não Definido')} · ${esc(ptDate(task.dueAt))}</div>
+   <div class="muted">${esc(capWords(task.sector))} · Responsável: ${esc(capWords(task.assignee||'Não Definido'))} · ${esc(ptDate(task.dueAt))}</div>
    ${task.details?`<p class="muted">${esc(task.details)}</p>`:''}</div>
    <div class="actions">
    <button class="btn secondary icon-action icon-search" type="button" data-detail="${esc(task.id)}" title="Detalhes" aria-label="Detalhes">${UI_ICONS.search}</button>
@@ -161,7 +161,7 @@ function renderCalendarNew(){
   const dailyEvents=(daily[selectedDay]||[]).sort((a,b)=>String(a.dueAt).localeCompare(String(b.dueAt)));
   $('selectedDateCount').textContent=dailyEvents.length+' '+(dailyEvents.length===1?'Atividade Programada':'Atividades Programadas');
   $('addCalendarEvent').classList.toggle('auth-hidden',role!=='admin');
-  $('agendaList').innerHTML=dailyEvents.length?dailyEvents.map(t=>`<button type="button" class="agenda-entry ${eventType(t)}" data-detail="${esc(t.id)}"><span class="mini">${esc((t.dueAt||'').match(/T(\d{2}:\d{2})/)?.[1]||'Dia Inteiro')} · ${esc(t.type)} · ${esc(t.priority)}</span><b>${esc(capWords(t.title))}</b><span class="mini">${esc(capWords(t.sector))} · ${esc(stateLabel[t.status])}</span></button>`).join(''):'<div class="agenda-empty">Nenhuma Atividade Para Este Dia.</div>';
+  $('agendaList').innerHTML=dailyEvents.length?dailyEvents.map(t=>`<button type="button" class="agenda-entry ${eventType(t)}" data-detail="${esc(t.id)}"><span class="mini">${esc((t.dueAt||'').match(/T(\d{2}:\d{2})/)?.[1]||'Dia Inteiro')} · ${esc(t.type)} · ${esc(t.priority)}</span><b>${esc(capWords(t.title))}</b><span class="mini">${esc(capWords(t.sector))} · ${esc(stateLabel[t.status])}</span></button>`).join(''):'<div class="agenda-empty">Nenhuma Atividade para Este Dia.</div>';
 }
 
 function renderListsNew(){
@@ -171,7 +171,7 @@ function renderListsNew(){
   $('statUrgent').textContent=active.filter(t=>['Crítica','Urgente'].includes(t.priority)).length;
   $('statDone').textContent=items.filter(t=>t.status==='concluida').length;
   const filter=$('filter').value;
-  const names={ativas:'Pendentes e Em Andamento',todas:'Todas As Atividades',aberta:'Em Aberto',andamento:'Em Andamento',urgentes:'Críticas / Urgentes',concluida:'Concluídas'};
+  const names={ativas:'Pendentes e em Andamento',todas:'Todas as Atividades',aberta:'Em Aberto',andamento:'Em Andamento',urgentes:'Críticas / Urgentes',concluida:'Concluídas'};
   document.querySelectorAll('[data-kpi]').forEach(b=>{const selected=b.dataset.kpi===filter;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected))});
   $('filterSummary').innerHTML='Exibindo: '+esc(names[filter]||names.todas)+' <button type="button" class="link-btn" id="resetFilters">Limpar Filtro</button>';
   $('resetFilters').onclick=()=>{$('filter').value='ativas';$('search').value='';renderListsNew()};
@@ -191,7 +191,7 @@ function openEditorNew(type,date){
   $('taskForm').reset();
   $('type').querySelectorAll('option').forEach(o=>o.disabled=role!=='admin'&&o.value!=='Ocorrência');
   $('type').value=type||'Ocorrência';$('dueDate').value=date||'';
-  $('editorTitle').textContent=type==='Evento'?'Novo Evento':'Nova Tarefa Ou Ocorrência';
+  $('editorTitle').textContent=type==='Evento'?'Novo Evento':'Nova Tarefa ou Ocorrência';
   modal('editor',true);
 }
 
@@ -217,8 +217,8 @@ async function deleteNowNew(){
   try{const batch=writeBatch(db);
     batch.delete(doc(db,'tarefas',deleteId));
     batch.set(doc(collection(db,'auditoria')),{taskId:deleteId,action:'exclusao',actorUid:user.uid,actorEmail:user.email,actorName:'Administrador',note:(t.type+': '+t.title).slice(0,1500),at:serverTimestamp()});
-    await batch.commit();modal('deleteConfirm',false);deleteId='';toast('Atividade Excluída. Registro De Auditoria Salvo.');
-  }catch(error){console.error(error);toast('Erro Ao Excluir: '+(error.code||error.message)+'. Publique As Regras Do Firestore 1.4.')}
+    await batch.commit();modal('deleteConfirm',false);deleteId='';toast('Atividade Excluída. Registro de Auditoria Salvo.');
+  }catch(error){console.error(error);toast('Erro ao Excluir: '+(error.code||error.message)+'. Publique as Regras do Firestore 1.4.')}
   finally{$('confirmDelete').disabled=false}
 }
 
@@ -263,8 +263,8 @@ $('taskForm').onsubmit = async function(event){
   $('saveTask').disabled=true;
   try{await addDoc(collection(db,'tarefas'),data);modal('editor',false);
     if(date&&data.type==='Evento'){const [y,m]=date.split('-').map(Number);selectedDay=date;monthCursor=new Date(y,m-1,1);document.querySelector('[data-page="agenda"]').click()}
-    toast('Atividade Registrada Com Sucesso.');
-  }catch(error){console.error(error);toast('Falha Ao Registrar: '+(error.code||error.message))}
+    toast('Atividade Registrada com Sucesso.');
+  }catch(error){console.error(error);toast('Falha ao Registrar: '+(error.code||error.message))}
   finally{$('saveTask').disabled=false}
 };
 
