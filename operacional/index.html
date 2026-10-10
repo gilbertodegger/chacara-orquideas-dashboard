@@ -305,6 +305,68 @@ main{padding:18px 20px 26px}
 .config-dialog #optionHelp{margin:9px 0 0}
 @media(max-width:1180px){.config-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.config-grid{grid-template-columns:1fr}.config-card{padding:12px}}
+
+/* Revisão de Máquinas — Interface Operacional iPad / Desktop */
+.machine-heading,.machine-config-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:13px}
+.machine-heading h2,.machine-config-heading h3{margin:0 0 4px;font-size:23px}
+.machine-heading p,.machine-config-heading p{margin:0}
+.machine-hint{padding:9px 12px;background:#e8eee7;color:#3e624d;border-radius:10px;font-size:12px;margin:0 0 12px}
+.machine-hint.warn{background:#fff0df;color:#915223}
+.machine-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-bottom:13px}
+.machine-stat{padding:11px 13px;background:#fff;border:1px solid var(--border);border-radius:12px}
+.machine-stat strong{font-size:24px;display:block;color:var(--text)}
+.machine-stat span{font-size:11px;color:#6d7e73}
+.machine-layout{display:grid;grid-template-columns:minmax(210px,.78fr) minmax(0,1.7fr);gap:12px;align-items:start}
+.machine-sidebar,.machine-detail,.machine-config{background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px;min-width:0}
+.machine-label{display:block;font-size:12px;font-weight:700;margin:0 0 6px}
+#machineSearch{width:100%;height:40px;border:1px solid #d3dfd4;border-radius:9px;padding:9px 11px;margin-bottom:11px}
+.machines-list{display:flex;flex-direction:column;gap:7px}
+.machine-tile{display:block;width:100%;text-align:left;background:#fff;border:1px solid #dce5da;border-radius:11px;padding:10px;color:var(--text);cursor:pointer}
+.machine-tile.selected{border-color:#bba16d;background:#fff9ef;box-shadow:0 0 0 1px #dbc493}
+.machine-tile:hover{border-color:#afc5ae}
+.machine-tile-top{display:flex;align-items:center;gap:7px;justify-content:space-between;flex-wrap:wrap}
+.machine-tile-top strong{font-size:14px}
+.machine-tile p{margin:6px 0 2px;color:#6d7f73;font-size:11px}
+.machine-tile small{color:#718579;font-size:11px}
+.oil-pill{display:inline-flex;align-items:center;font-size:10px;line-height:1.3;font-weight:750;border-radius:20px;padding:5px 8px;white-space:nowrap;background:#ecf0eb;color:#637769}
+.oil-pill.good{background:#e0f1e2;color:#246038}.oil-pill.soon{background:#fff0d4;color:#865b15}.oil-pill.overdue{background:#ffe2df;color:#a13831}.oil-pill.unknown{background:#eff1ee;color:#6b796e}
+.machine-detail-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.machine-detail-head h3{margin:0 0 7px;font-size:20px}
+.machine-actions{display:flex;gap:7px;flex-wrap:wrap}
+.machine-actions .btn{padding:9px 10px;font-size:12px}
+.machine-next{font-size:12px;margin:12px 0;padding:10px 12px;border-radius:9px;background:#f1f5f0;color:#365e46}
+.machine-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.machine-detail-grid>div{display:flex;flex-direction:column;gap:4px;background:#f8faf7;border-radius:9px;padding:9px 10px;min-width:0}
+.machine-detail-grid span{font-size:11px;color:#6a806e}
+.machine-detail-grid strong{font-size:13px;overflow-wrap:anywhere;color:#264736}
+.machine-detail-columns{display:grid;grid-template-columns:1.1fr .9fr;gap:10px;margin:12px 0}
+.machine-detail-panel{border:1px solid #e3e9e0;border-radius:11px;padding:12px;min-width:0}
+.machine-detail-panel h4{margin:0 0 9px;font-size:14px}
+.machine-notes{font-size:12px;color:#3d604b;white-space:pre-wrap;line-height:1.5;margin:0}
+.machine-table{width:100%;border-collapse:collapse;text-align:left;font-size:12px}
+.machine-table th,.machine-table td{padding:7px 5px;border-bottom:1px solid #ecf0ec;vertical-align:top;overflow-wrap:anywhere}
+.machine-table th{color:#607465;font-weight:700}
+.oil-history{display:grid;gap:6px}.oil-history-item{display:grid;grid-template-columns:1fr auto;gap:5px 10px;border-bottom:1px solid #e7eee5;padding:8px 0}
+.oil-history-item strong{font-size:12px}.oil-history-item span{font-size:12px;color:#496751}.oil-history-item p{font-size:12px;color:#6f7e73;grid-column:1/-1;margin:0;white-space:pre-wrap}
+.machine-empty{padding:15px;color:#6c7f70;font-size:12px}
+.machine-config{margin-top:18px}
+.machine-config-heading h3{font-size:18px}
+.machine-config-actions{display:flex;gap:8px;flex-wrap:wrap}.machine-config-actions .btn{padding:9px 11px;font-size:12px}
+.machine-settings-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.machine-settings-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px;background:#f8faf7;border:1px solid #e2e9e1;border-radius:10px;min-width:0}
+.machine-settings-row strong{font-size:13px;display:block}
+.machine-settings-row small{font-size:11px;color:#78897b;display:block;margin-top:3px}
+.machine-settings-row .btn{padding:7px 10px;font-size:12px}
+.machine-dialog{width:min(760px,100%)}
+.machine-parts-header{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.machine-parts-header .btn{font-size:12px;padding:8px 10px}
+.parts-labels,.parts-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) 32px;gap:8px;align-items:center}
+.parts-labels{font-size:11px;color:#738576;margin:8px 0 4px}
+.machine-parts-edit{display:grid;gap:6px}
+.parts-row input{height:39px;width:100%;min-width:0;padding:7px 10px;border:1px solid #ccd9ce;border-radius:8px;font:inherit;font-size:12px}
+.parts-remove{height:32px;width:32px;border:1px solid #e1cbc8;border-radius:9px;background:#fff5f3;color:#a4443b;font-size:22px;line-height:1}
+@media(max-width:1060px){.machine-layout{grid-template-columns:1fr}.machine-detail-columns{grid-template-columns:1fr}.machine-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.machine-settings-list{grid-template-columns:1fr}.machine-detail-grid{grid-template-columns:1fr 1fr}.machine-heading h2{font-size:20px}}
 </style>
 </head>
 <body>
@@ -335,6 +397,7 @@ main{padding:18px 20px 26px}
 <button class="active" data-page="tarefas">☑ Tarefas e Ocorrências</button>
 <button data-page="agenda">▦ Agenda</button>
 <button data-page="historico">✓ Histórico</button>
+<button data-page="maquinas" type="button">⚙ Revisão de Máquinas</button>
 <button class="auth-hidden" data-page="configuracoes" id="settingsNav" type="button">⚙ Configurações</button>
 </div>
 <div class="foot">
@@ -387,14 +450,71 @@ main{padding:18px 20px 26px}
 <h2>Atividades Concluídas</h2>
 <div class="list" id="historyList"></div>
 </section>
+<section class="section" id="maquinas">
+<div class="machine-heading"><div><h2>Revisão de Máquinas</h2><p class="muted">Controle de Trocas de Óleo, Horímetros e Histórico de Manutenção.</p></div><button id="machineGoSettings" class="btn secondary" type="button" title="Gerenciar Equipamentos">Configurações</button></div>
+<div id="machineMessage" class="machine-hint" role="status">Carregando Equipamentos...</div>
+<div class="machine-stats">
+<div class="machine-stat"><strong id="machineCount">0</strong><span>Equipamentos</span></div>
+<div class="machine-stat"><strong id="machineOverdue">0</strong><span>Revisões Vencidas</span></div>
+<div class="machine-stat"><strong id="machineSoon">0</strong><span>Próximas Revisões</span></div>
+<div class="machine-stat"><strong id="machineUnconfigured">0</strong><span>Sem Referência</span></div>
+</div>
+<div class="machine-layout">
+<div class="machine-sidebar">
+<label class="machine-label" for="machineSearch">Pesquisar Equipamentos</label><input id="machineSearch" type="search" placeholder="Marca, Modelo ou Série" />
+<div id="machinesGrid" class="machines-list"></div>
+</div>
+<article id="machineDetail" class="machine-detail" hidden>
+<div class="machine-detail-head"><div><h3 id="machineTitle">Equipamento</h3><span class="oil-pill unknown" id="machineOilStatus">Sem Referência</span></div>
+<div class="machine-actions"><button id="editSelectedMachine" type="button" class="btn secondary" hidden>Editar</button><button id="logOilChange" type="button" class="btn" hidden>+ Registrar Troca de Óleo</button></div></div>
+<p id="machineNext" class="machine-next"></p>
+<div id="machineInfo" class="machine-detail-grid"></div>
+<div class="machine-detail-columns">
+<div class="machine-detail-panel"><h4>Códigos de Peças</h4><table class="machine-table"><thead><tr><th>Código</th><th>Descrição</th></tr></thead><tbody id="machineParts"></tbody></table></div>
+<div class="machine-detail-panel"><h4>Notas Personalizadas</h4><p id="machineNotes" class="machine-notes"></p></div>
+</div>
+<div class="machine-detail-panel machine-history-panel"><h4>Histórico de Revisões</h4><div id="machineHistory" class="oil-history"></div></div>
+</article>
+</div>
+</section>
 <section class="section" id="configuracoes">
 <div class="config-intro"><h2>Configurações</h2><p class="muted">Gerencie as Opções dos Formulários. As Mudanças Aparecem Automaticamente em Todos os Dispositivos.</p></div>
 <div id="settingsNotice" class="config-notice" role="status"></div>
 <div id="settingsCards" class="config-grid"></div>
 <p class="config-footnote">Renomear ou Desativar uma Opção Não Altera os Registros Existentes. Tipos Essenciais do Sistema Permanecem Ativos.</p>
+<div id="machineSettingsAdmin" class="machine-config" hidden>
+<div class="machine-config-heading"><div><h3>Cadastro de Equipamentos</h3><p class="muted">Adicione ou Edite Máquinas, Horímetros, Intervalos de Revisão e Códigos de Peças.</p></div>
+<div class="machine-config-actions"><button class="btn secondary" id="seedMachines" type="button">Cadastrar os 5 Equipamentos Iniciais</button><button class="btn" id="machineNew" type="button">+ Novo Equipamento</button></div></div>
+<div id="machineSettingsList" class="machine-settings-list"></div>
+</div>
 </section>
 </main>
 </div>
+<div class="modal" id="machineEditor">
+<div class="dialog machine-dialog"><h2 id="machineFormTitle">Novo Equipamento</h2>
+<form id="machineForm">
+<div class="fields">
+<div class="field"><label for="brand">Marca *</label><input id="brand" maxlength="80" required placeholder="Ex.: John Deere"/></div>
+<div class="field"><label for="model">Modelo *</label><input id="model" maxlength="80" required placeholder="Ex.: 5080E"/></div>
+<div class="field"><label for="serial">Nº de Série</label><input id="serial" maxlength="100" placeholder="Número de Série"/></div>
+<div class="field"><label for="modelYear">Ano/Modelo</label><input id="modelYear" maxlength="30" placeholder="Ex.: 2021/2022"/></div>
+<div class="field"><label for="insured">Seguro</label><select id="insured"><option value="">Não Informado</option><option value="Sim">Sim</option><option value="Não">Não</option></select></div>
+<div class="field"><label for="machineHours">Horímetro Atual (h)</label><input id="machineHours" type="number" min="0" step="0.1" placeholder="Leitura Atual"/></div>
+<div class="field"><label for="oilIntervalHours">Intervalo da Troca de Óleo (h)</label><input id="oilIntervalHours" type="number" min="1" step="0.1" placeholder="Conforme Manual"/></div>
+<div class="field"><label for="oilIntervalMonths">Intervalo por Tempo (Meses)</label><input id="oilIntervalMonths" type="number" min="1" step="1" placeholder="Conforme Manual"/></div>
+<div class="field full"><label for="machineObservations">Notas Personalizadas</label><textarea id="machineObservations" maxlength="4000" placeholder="Observações, Peças, Manuais e Informações do Equipamento"></textarea></div>
+<div class="field full"><div class="machine-parts-header"><label>Códigos de Peças</label><button id="machinePartsAdd" class="btn secondary" type="button">+ Adicionar Peça</button></div>
+<div class="parts-labels"><span>Código</span><span>Descrição</span><span></span></div><div id="machinePartsEdit" class="machine-parts-edit"></div></div>
+</div><p class="muted">Intervalos Devem Ser Informados Conforme o Manual da Máquina. Campos Desconhecidos Podem Ficar em Branco.</p>
+<div class="dialogfooter"><button class="btn secondary" type="button" data-machine-close="machineEditor">Cancelar</button><button class="btn" type="submit" id="saveMachine">Salvar Equipamento</button></div>
+</form></div></div>
+<div class="modal" id="oilModal"><div class="dialog">
+<h2>Registrar Troca de Óleo</h2><p class="muted" id="oilEquipmentName"></p>
+<form id="oilForm"><div class="fields">
+<div class="field"><label for="oilDate">Data da Troca *</label><input id="oilDate" type="date" required/></div>
+<div class="field"><label for="oilHours">Horímetro no Serviço (h)</label><input id="oilHours" type="number" min="0" step="0.1" placeholder="Leitura no Momento"/></div>
+<div class="field full"><label for="oilNotes">Descrição e Observações</label><textarea id="oilNotes" maxlength="1500" placeholder="Serviços Realizados e Peças Utilizadas"></textarea></div>
+</div><div class="dialogfooter"><button class="btn secondary" type="button" data-machine-close="oilModal">Cancelar</button><button class="btn" type="submit" id="saveOil">Registrar Revisão</button></div></form></div></div>
 <div class="modal" id="editor">
 <div class="dialog">
 <h2 id="editorTitle">Nova Tarefa ou Ocorrência</h2>
@@ -488,5 +608,6 @@ main{padding:18px 20px 26px}
 </div></div><div id="toast" role="status"></div>
 <script src="./firebase-config.js"></script>
 <script src="./app.js" type="module"></script>
+<script src="./maquinas.js" type="module"></script>
 </body>
 </html>
