@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "source": "functions",
+    "codebase": "chacara-operacional",
+    "runtime": "nodejs22"
+  }
+}
