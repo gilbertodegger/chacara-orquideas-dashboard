@@ -86,10 +86,10 @@ service cloud.firestore {
         allow read: if active();
         allow create: if admin()
           && request.resource.data.keys().hasOnly([
-            'tipo','data','horimetro','observacoes','createdAt','createdByUid'
+            'tipo','data','horimetro','observacoes','createdAt','createdByUid','anteriorData','anteriorHorimetro'
           ])
           && request.resource.data.keys().hasAll([
-            'tipo','data','horimetro','observacoes','createdAt','createdByUid'
+            'tipo','data','horimetro','observacoes','createdAt','createdByUid','anteriorData','anteriorHorimetro'
           ])
           && request.resource.data.tipo == 'Troca de Óleo'
           && request.resource.data.data is string
@@ -98,6 +98,11 @@ service cloud.firestore {
             || (request.resource.data.horimetro is number && request.resource.data.horimetro >= 0))
           && request.resource.data.observacoes is string
           && request.resource.data.observacoes.size() <= 1500
+          && request.resource.data.get('anteriorData','') is string
+          && request.resource.data.get('anteriorData','').size() <= 10
+          && (request.resource.data.get('anteriorHorimetro',null) == null ||
+             (request.resource.data.get('anteriorHorimetro',null) is number &&
+              request.resource.data.get('anteriorHorimetro',null) >= 0))
           && request.resource.data.createdAt == request.time
           && request.resource.data.createdByUid == request.auth.uid;
         allow update: if false;
@@ -185,16 +190,26 @@ service cloud.firestore {
         allow read: if active();
         allow create: if admin()
           && request.resource.data.keys().hasOnly([
-            'data','material','observacoes','createdAt','createdByUid'
+            'data','material','observacoes','createdAt','createdByUid','anteriorDataTroca','anteriorMaterial','anteriorLimiteOrdenhas','anteriorLimiteMeses'
           ])
           && request.resource.data.keys().hasAll([
-            'data','material','observacoes','createdAt','createdByUid'
+            'data','material','observacoes','createdAt','createdByUid','anteriorDataTroca','anteriorMaterial','anteriorLimiteOrdenhas','anteriorLimiteMeses'
           ])
           && request.resource.data.data is string
           && request.resource.data.data.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
           && request.resource.data.material in ['Borracha','Silicone','Outro']
           && request.resource.data.observacoes is string
           && request.resource.data.observacoes.size() <= 1200
+          && request.resource.data.get('anteriorDataTroca','') is string
+          && request.resource.data.get('anteriorDataTroca','').size() <= 10
+          && request.resource.data.get('anteriorMaterial','') is string
+          && request.resource.data.get('anteriorMaterial','').size() <= 60
+          && (request.resource.data.get('anteriorLimiteOrdenhas',null) == null ||
+            (request.resource.data.get('anteriorLimiteOrdenhas',null) is int &&
+             request.resource.data.get('anteriorLimiteOrdenhas',null) > 0))
+          && (request.resource.data.get('anteriorLimiteMeses',null) == null ||
+            (request.resource.data.get('anteriorLimiteMeses',null) is int &&
+             request.resource.data.get('anteriorLimiteMeses',null) > 0))
           && request.resource.data.createdByUid == request.auth.uid
           && request.resource.data.createdAt == request.time;
         allow update: if false;
@@ -229,14 +244,16 @@ service cloud.firestore {
         && request.resource.data.limiteOrdenhas == 5000
         && request.resource.data.observacoes is string
         && request.resource.data.observacoes.size() <= 1500
+          && request.resource.data.get('anteriorDataTroca','') is string
+          && request.resource.data.get('anteriorDataTroca','').size() <= 10
         && request.resource.data.updatedAt == request.time
         && request.resource.data.updatedByUid == request.auth.uid;
       allow delete: if false;
       match /trocas/{trocaId} {
         allow read: if active();
         allow create: if admin()
-          && request.resource.data.keys().hasOnly(['data','conjuntos','observacoes','createdAt','createdByUid'])
-          && request.resource.data.keys().hasAll(['data','conjuntos','observacoes','createdAt','createdByUid'])
+          && request.resource.data.keys().hasOnly(['data','conjuntos','observacoes','createdAt','createdByUid','anteriorDataTroca'])
+          && request.resource.data.keys().hasAll(['data','conjuntos','observacoes','createdAt','createdByUid','anteriorDataTroca'])
           && request.resource.data.data is string
           && request.resource.data.data.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
           && request.resource.data.conjuntos is int
@@ -244,6 +261,8 @@ service cloud.firestore {
           && request.resource.data.conjuntos <= 100
           && request.resource.data.observacoes is string
           && request.resource.data.observacoes.size() <= 1500
+          && request.resource.data.get('anteriorDataTroca','') is string
+          && request.resource.data.get('anteriorDataTroca','').size() <= 10
           && request.resource.data.createdAt == request.time
           && request.resource.data.createdByUid == request.auth.uid;
         allow update: if false;
