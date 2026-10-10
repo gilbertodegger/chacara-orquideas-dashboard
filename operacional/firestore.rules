@@ -10,9 +10,46 @@ service cloud.firestore {
       return active() &&
         get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == 'admin';
     }
+    // Usuários: cada conta consulta o próprio perfil. Apenas administradores
+    // listam e alteram perfis; a própria conta do admin não pode ser rebaixada.
     match /usuarios/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
-      allow write: if false;
+      allow get: if request.auth != null
+        && (request.auth.uid == uid || admin());
+      allow list: if admin();
+      allow create: if admin()
+        && uid != request.auth.uid
+        && request.resource.data.keys().hasOnly([
+          'nome','email','role','ativo','createdAt','createdByUid','updatedAt','updatedByUid'
+        ])
+        && request.resource.data.keys().hasAll([
+          'nome','email','role','ativo','createdAt','createdByUid','updatedAt','updatedByUid'
+        ])
+        && request.resource.data.nome is string
+        && request.resource.data.nome.size() >= 2
+        && request.resource.data.nome.size() <= 80
+        && request.resource.data.email is string
+        && request.resource.data.email.size() >= 5
+        && request.resource.data.email.size() <= 254
+        && request.resource.data.email.matches('^.+@.+[.].+$')
+        && request.resource.data.role in ['admin','operator']
+        && request.resource.data.ativo == true
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.createdByUid == request.auth.uid
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.updatedByUid == request.auth.uid;
+      allow update: if admin()
+        && uid != request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'nome','role','ativo','updatedAt','updatedByUid'
+        ])
+        && request.resource.data.nome is string
+        && request.resource.data.nome.size() >= 2
+        && request.resource.data.nome.size() <= 80
+        && request.resource.data.role in ['admin','operator']
+        && request.resource.data.ativo is bool
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.updatedByUid == request.auth.uid;
+      allow delete: if false;
     }
     // Configurações sincronizadas: apenas o administrador pode alterar.
     match /configuracoes/{configId} {
