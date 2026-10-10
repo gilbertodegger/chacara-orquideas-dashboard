@@ -502,6 +502,48 @@ main{padding:18px 20px 26px}
 .users-form-help{font-size:11px;line-height:1.6;color:#627968;background:#f1f5ee;padding:10px;border-radius:9px;margin:11px 0}
 .users-dialog [hidden]{display:none!important}
 @media(max-width:760px){.users-heading h2{font-size:20px}.users-row{grid-template-columns:minmax(0,1fr) auto;gap:8px}.users-person{grid-column:1 / -1}.users-stats{gap:6px}.users-stats>div{padding:11px 9px}.users-actions{justify-self:end}.users-dialog .dialogfooter{flex-wrap:wrap}}
+
+/* Chamados contínuos, rotinas e menu fixo — versão operacional. */
+.app{grid-template-columns:196px minmax(0,1fr);align-items:start}
+.app>aside{position:sticky;top:0;height:100vh;height:100dvh;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:10px;z-index:9}
+.app>aside .brand{flex-shrink:0}
+.app>aside .nav{display:flex;flex-direction:column;flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;align-items:stretch;padding:3px 0 5px}
+.app>aside .nav button{flex-shrink:0;white-space:normal;line-height:1.35}
+.app>aside .foot{display:block;flex-shrink:0;margin-top:auto;background:rgba(12,39,28,.9);padding:10px 4px 3px;border-top:1px solid rgba(214,177,109,.24)}
+.app>aside .foot .btn{display:block;width:100%;margin:8px 0 0;padding:9px}
+.app>aside .foot #userLabel{font-size:11px;line-height:1.4;overflow-wrap:anywhere}
+.app>aside .foot #roleLabel{font-size:11px}
+.event-repeat-fields[hidden],.recurrence-detail[hidden]{display:none!important}
+.call-original{background:#f3f7f1;border-left:3px solid #af9056;border-radius:9px;padding:10px 12px;margin-bottom:10px}
+.call-original strong{font-size:12px;color:#29563d}
+.call-original p{white-space:pre-wrap;margin:6px 0 0;font-size:13px;color:#345541;line-height:1.5;overflow-wrap:anywhere}
+.call-action-notes{white-space:pre-wrap;font-size:12px;color:#4b6655;line-height:1.5;margin-top:7px;max-height:120px;overflow-y:auto}
+.call-timeline{margin-top:15px;border-top:1px solid #dfe8dc;padding-top:14px}
+.call-timeline-header{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.call-timeline-header h3{font-size:15px;margin:0 0 10px}
+.call-timeline-header span{font-size:11px;color:#768d78}
+.call-updates{max-height:255px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.call-note{background:#f7faf6;border:1px solid #e2ece0;border-radius:10px;padding:10px 11px}
+.call-note-head{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:6px;font-size:11px;color:#65806c}
+.call-note-head strong{font-size:12px;color:#315944}
+.call-note p{font-size:12px;line-height:1.55;color:#294c37;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+#taskNoteForm{display:flex;flex-direction:column;gap:7px}
+#taskNoteForm label{font-weight:700;font-size:12px}
+#taskNoteForm textarea{width:100%;min-height:75px;resize:vertical;border:1px solid #c8d9c7;border-radius:10px;padding:10px;font:inherit}
+#taskNoteForm .dialogfooter{margin:1px 0 0}
+#taskNoteForm[hidden]{display:none!important}
+#detail .dialog{width:min(735px,100%)}
+@media(max-width:860px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .app>aside{position:sticky;top:0;height:auto;min-height:0;padding:7px 10px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:7px}
+  .app>aside .brand{padding:0;border:0}
+  .app>aside .brand img{width:51px}
+  .app>aside .nav{display:flex;flex-direction:row;gap:5px;align-items:center;overflow-x:auto;overflow-y:hidden;min-width:0;padding:1px;max-height:none}
+  .app>aside .nav button{white-space:nowrap;padding:9px;font-size:12px}
+  .app>aside .foot{display:block;margin:0;padding:0;border:0;background:transparent}
+  .app>aside .foot #userLabel,.app>aside .foot #roleLabel{display:none}
+  .app>aside .foot .btn{margin:0;padding:9px 11px;width:auto;font-size:12px;background:#f0f2e9;color:#234632;border-radius:9px}
+}
 </style>
 </head>
 <body>
@@ -807,19 +849,20 @@ main{padding:18px 20px 26px}
 <label for="assignee">Responsável</label>
 <select id="assignee"><option value="">Selecionar Responsável</option><option value="Gilberto">Gilberto</option><option value="Teodoro">Teodoro</option><option value="Marília">Marília</option><option value="Funcionário">Funcionário</option></select>
 </div>
-<div class="field"><label for="dueDate">Prazo / Data do Evento</label><input id="dueDate" type="date"/></div>
+<div class="field"><label for="dueDate" id="dueDateLabel">Prazo / Data do Evento</label><input id="dueDate" type="date"/></div>
 <div class="field"><label for="dueTime">Horário (Opcional)</label><input id="dueTime" type="time"/></div>
 <div class="field full event-repeat-fields" id="eventRepeatArea" hidden>
-  <label for="repeatFrequency">Repetir Evento</label>
+  <label for="repeatFrequency">Frequência da Rotina</label>
   <select id="repeatFrequency">
-    <option value="none">Não Repetir</option>
-    <option value="weekly">Toda Semana</option>
+    <option value="daily">Todos os Dias</option>
+    <option value="weekly" selected>Toda Semana</option>
+    <option value="monthly">Todo Mês</option>
   </select>
-  <div class="recurrence-detail" id="repeatWeeklyDetails" hidden>
-    <div class="recurrence-explanation" id="repeatSummary">Selecione a Data e o Horário do Primeiro Evento.</div>
-    <label for="repeatUntil">Repetir Até (Opcional)</label>
+  <div class="recurrence-detail" id="repeatWeeklyDetails">
+    <div class="recurrence-explanation" id="repeatSummary">Escolha o Início da Rotina.</div>
+    <label for="repeatUntil">Data de Fim da Rotina *</label>
     <input id="repeatUntil" type="date"/>
-    <small>Sem Data Final: O Evento Se Repete Semanalmente Até Ser Excluído pelo Administrador.</small>
+    <small>Início: Prazo / Data da Atividade. Fim: Última Ocorrência Permitida. Apenas o Administrador Cadastra Rotinas.</small>
   </div>
 </div>
 <div class="field full">
@@ -838,14 +881,16 @@ main{padding:18px 20px 26px}
 <div class="dialog">
 <h2 id="completeTitle">Confirmar Atividade</h2>
 <form id="completeForm">
-<div class="notice">O Nome Informado Serve Como Registro Operacional, Não Como Autenticação Forte. o Login da Conta Também Ficará Registrado.</div>
+<div class="notice">O Nome Informado Serve Como Registro Operacional, Não Como Autenticação Forte. O Login da Conta Também Ficará Registrado.</div>
+<div class="call-original"><strong>Descrição Original do Chamado</strong><p id="actionOriginalDescription"></p></div>
+<div class="call-original"><strong>Últimas Atualizações</strong><div id="actionRecentNotes" class="call-action-notes"></div></div>
 <div class="fields">
 <div class="field full">
 <label for="worker">Nome de Quem Executou *</label>
 <input id="worker" maxlength="80" required=""/>
 </div>
 <div class="field full">
-<label for="completionNote">Observação / Solução Realizada</label>
+<label for="completionNote" id="completionNoteLabel">Nota da Atualização</label>
 <textarea id="completionNote" maxlength="1500" placeholder="O que Foi Feito?"></textarea>
 </div>
 </div>
@@ -860,6 +905,15 @@ main{padding:18px 20px 26px}
 <div class="modal" id="detail"><div class="dialog">
 <h2 id="detailTitle">Detalhes da Atividade</h2>
 <div id="detailContent"></div>
+<div class="call-timeline">
+  <div class="call-timeline-header"><h3>Histórico do Chamado</h3><span id="noteCount"></span></div>
+  <div id="taskNotesList" class="call-updates" role="log" aria-live="polite">Carregando Atualizações...</div>
+  <form id="taskNoteForm">
+    <label for="taskNoteText">Adicionar Nota ao Chamado</label>
+    <textarea id="taskNoteText" maxlength="1500" required placeholder="Descreva a Nova Informação, o Serviço Realizado ou a Pendência..."></textarea>
+    <div class="dialogfooter"><button class="btn" type="submit" id="taskNoteSave">+ Adicionar Nota</button></div>
+  </form>
+</div>
 <div class="dialogfooter"><button class="delete-button auth-hidden icon-action icon-delete" id="openDelete" type="button" title="Excluir Atividade" aria-label="Excluir Atividade"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg></button><button class="btn secondary" data-close="detail" type="button">Fechar</button></div>
 </div></div>
 <div class="modal" id="usersCreateModal">
