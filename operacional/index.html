@@ -1,10 +1,383 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#153e30"><title>Chácara | Gestão Operacional</title>
-<style>
-*{box-sizing:border-box}body{margin:0;background:#f2f4f0;color:#193b30;font-family:system-ui,-apple-system,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.55}.hidden{display:none!important}.login{max-width:430px;margin:9vh auto;background:#fff;border-radius:16px;padding:28px;box-shadow:0 5px 30px #0012}.login input{width:100%;padding:12px;margin:5px 0 14px;border:1px solid #bbc9c1;border-radius:8px}.btn{background:#1a5c42;color:white;border:0;border-radius:9px;padding:12px 16px;font-weight:650}.btn.alt{background:#fff;border:1px solid #b8c9bd;color:#244836}.layout{display:grid;grid-template-columns:220px 1fr;min-height:100vh}aside{background:#153d30;color:#fff;padding:20px;display:flex;flex-direction:column;gap:12px}.brand{color:#dfc68c;font-weight:800;font-size:17px;padding:12px 0 25px}.brand small{color:white;display:block;font-size:12px;font-weight:400}.nav{display:grid;gap:9px}.nav button{background:transparent;border:0;border-radius:9px;padding:13px;color:#fff;text-align:left}.nav button.active{background:#32634d}main{width:100%;max-width:1400px;padding:25px;margin:auto}header{display:flex;justify-content:space-between;align-items:center;gap:12px}.muted{color:#6b786f;font-size:13px;line-height:1.55}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:15px 0}.stat,.task,.agenda-row{background:white;border:1px solid #dce7dd;border-radius:12px;padding:15px}.stat b{display:block;font-size:29px}.stat span{font-size:13px;color:#61766a}.toolbar{display:flex;gap:10px;margin:16px 0;flex-wrap:wrap}.toolbar input{flex:1;min-width:170px}.toolbar input,.toolbar select{padding:11px;border:1px solid #c4d1c7;border-radius:8px}.tasklist{display:grid;gap:10px}.task{display:flex;justify-content:space-between;align-items:center;gap:15px}.task h3{margin:0 0 8px;font-size:17px}.tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}.tag{font-size:12px;border-radius:99px;padding:4px 8px;background:#e7eee8}.tag.hot{background:#ffe2cb;color:#8f430d}.tag.critical{background:#ffd6d6;color:#9b1f1f}.tag.done{background:#d6f4dd;color:#195a2c}.actions{display:flex;gap:7px;flex-wrap:wrap}.actions .btn{white-space:nowrap}.page{display:none}.page.active{display:block}.modal{position:fixed;inset:0;background:#071e18aa;display:none;align-items:center;justify-content:center;padding:12px;z-index:10}.modal.show{display:flex}.dialog{background:white;border-radius:17px;padding:25px;width:min(630px,100%);max-height:94vh;overflow:auto}.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:flex;flex-direction:column;gap:5px}.field.wide{grid-column:1/-1}.field label{font-size:13px;font-weight:650}.field input,.field select,.field textarea{width:100%;padding:11px;border:1px solid #bfcfc3;border-radius:9px}.field textarea{min-height:80px}.footer{display:flex;justify-content:flex-end;gap:8px;margin-top:15px}.empty{background:white;padding:30px;text-align:center;border-radius:12px}.toast{display:none;position:fixed;bottom:20px;right:15px;max-width:350px;background:#173e30;color:white;border-radius:10px;padding:14px;z-index:20}.hint{background:#e3eee7;padding:11px;border-radius:10px;font-size:13px}.foot{margin-top:auto;overflow-wrap:anywhere;font-size:12px}.agenda-row{margin-bottom:10px;border-left:5px solid #bda06a}@media(max-width:850px){.layout{grid-template-columns:1fr}aside{padding:12px;gap:5px}.brand{padding:4px}.nav{display:flex;overflow:auto}.nav button{white-space:nowrap}.foot{margin-top:6px}main{padding:14px}header{align-items:start;flex-direction:column}.task{flex-direction:column;align-items:stretch}.stats{grid-template-columns:repeat(2,1fr)}.fields{grid-template-columns:1fr}}</style></head><body>
-<section id="login" class="login"><h2>Chácara das Orquídeas</h2><p>Gestão operacional • Farmácia</p><form id="loginForm"><label>E-mail</label><input id="email" type="email" autocomplete="username" required><label>Senha</label><input id="password" type="password" autocomplete="current-password" required><button class="btn" style="width:100%">Entrar</button></form><p class="muted">Acesso somente a contas autorizadas.</p></section>
-<div id="app" class="layout hidden"><aside><div class="brand">✦ CHÁCARA DAS ORQUÍDEAS<small>Gestão operacional</small></div><nav class="nav"><button class="active" data-page="tarefas">☑ Tarefas</button><button data-page="agenda">▦ Agenda</button><button data-page="historico">✓ Histórico</button></nav><div class="foot"><div id="userLabel"></div><div id="roleLabel"></div><button class="btn alt" id="logout" style="margin-top:8px">Sair</button></div></aside><main><header><div><h1 id="pageTitle">Central de tarefas</h1><p class="muted" id="today"></p></div><button class="btn" id="new">+ Nova ocorrência / tarefa</button></header><p class="hint" id="roleInfo"></p>
-<section class="page active" id="tarefas"><div class="stats"><div class="stat"><b id="statOpen">0</b><span>Em aberto</span></div><div class="stat"><b id="statProgress">0</b><span>Andamento</span></div><div class="stat"><b id="statUrgent">0</b><span>Urgentes</span></div><div class="stat"><b id="statDone">0</b><span>Concluídas</span></div></div><div class="toolbar"><input id="search" placeholder="Buscar tarefa ou setor"><select id="filter"><option value="ativas">Em aberto / andamento</option><option value="todas">Todas</option><option value="urgentes">Urgentes</option></select></div><div class="tasklist" id="taskList"></div></section>
-<section class="page" id="agenda"><h2>Agenda e prazos</h2><div id="agendaList"></div></section><section class="page" id="historico"><h2>Atividades concluídas</h2><div class="tasklist" id="historyList"></div></section>
-</main></div>
-<div id="editor" class="modal"><div class="dialog"><h2 id="editorTitle">Novo registro</h2><form id="taskForm"><div class="fields"><div class="field wide"><label>Título *</label><input id="title" maxlength="130" required placeholder="Ex.: Portão do lote 2 quebrado"></div><div class="field"><label>Tipo</label><select id="type"><option>Ocorrência</option><option>Tarefa</option><option>Evento</option></select></div><div class="field"><label>Prioridade</label><select id="priority"><option>Normal</option><option>Baixa</option><option>Urgente</option><option>Crítica</option></select></div><div class="field"><label>Setor</label><select id="sector"><option>Farmácia</option><option>Ordenha</option><option>Sala do tanque</option><option>Alimentação</option><option>Lote 1</option><option>Lote 2</option><option>Lote 3</option><option>Lote 4</option><option>Manutenção</option><option>Pátio e acessos</option><option>Escritório</option><option>Outros</option></select></div><div class="field"><label>Responsável</label><input id="assignee" maxlength="80"></div><div class="field"><label>Prazo/data</label><input id="due" type="datetime-local"></div><div class="field wide"><label>Detalhes</label><textarea id="details" maxlength="3000"></textarea></div></div><div class="footer"><button class="btn alt" type="button" data-close="editor">Cancelar</button><button class="btn" id="saveTask">Registrar</button></div></form></div></div>
-<div id="complete" class="modal"><div class="dialog"><h2 id="completeTitle">Atualizar tarefa</h2><p class="hint">O nome informado é declaratório; a conta que realizou a ação também será registrada.</p><form id="completeForm"><div class="fields"><div class="field wide"><label>Nome de quem executou *</label><input id="worker" maxlength="80" required></div><div class="field wide"><label>Observação</label><textarea id="completionNote" maxlength="1500"></textarea></div></div><div class="footer"><button class="btn alt" type="button" data-close="complete">Cancelar</button><button class="btn" id="confirmAction">Confirmar</button></div></form></div></div><div class="toast" id="toast" role="status"></div><script src="./firebase-config.js"></script><script type="module" src="./app.js"></script></body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#123a2e">
+  <title>Chácara das Orquídeas | Gestão Operacional</title>
+  <style>
+    :root{
+      --green-900:#12382e;
+      --green-850:#143d31;
+      --green-800:#184838;
+      --green-700:#1c5843;
+      --green-100:#eef2ec;
+      --card:#ffffff;
+      --text:#173329;
+      --muted:#697870;
+      --gold:#d7b375;
+      --gold-2:#e5c98b;
+      --border:#dce5da;
+      font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;
+      color:var(--text);
+      background:var(--green-100);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--green-100)}
+    button,input,select,textarea{font:inherit}
+    button{cursor:pointer}
+    button:disabled{opacity:.5;cursor:not-allowed}
+    .hidden{display:none!important}
+    .app{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
+
+    aside{background:linear-gradient(180deg,var(--green-900),#0d3026);color:#e9efe8;padding:22px 16px;display:flex;flex-direction:column;gap:16px}
+    .brand{display:flex;align-items:center;gap:12px;padding:8px 8px 20px;border-bottom:1px solid rgba(229,201,139,.25)}
+    .brand-mark{width:46px;height:46px;border-radius:12px;background:rgba(229,201,139,.12);display:grid;place-items:center;flex:0 0 auto}
+    .brand-mark svg{width:30px;height:30px}
+    .brand-text{line-height:1.1}
+    .brand-title{color:var(--gold-2);font-size:12px;font-weight:800;letter-spacing:1px}
+    .brand-sub{font-size:19px;font-weight:800;color:#f0f4ef;letter-spacing:.5px}
+
+    .nav{display:grid;gap:8px}
+    .nav button{border:0;background:transparent;color:#e7eee6;padding:14px;text-align:left;border-radius:10px;font-weight:600}
+    .nav button.active,.nav button:hover{background:#285447}
+    .foot{margin-top:auto;font-size:12px;color:#c6d6c9;overflow-wrap:anywhere}
+
+    main{padding:26px;max-width:1540px;width:100%;margin:auto}
+    .hero{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:18px 20px;display:flex;justify-content:space-between;align-items:flex-start;gap:18px;box-shadow:0 6px 20px rgba(10,30,20,.05)}
+    .hero-left{min-width:0}
+    .eyebrow{font-size:12px;font-weight:800;letter-spacing:1.4px;color:#876433;text-transform:uppercase;margin-bottom:6px}
+    .hero h1{margin:0;font-size:34px;letter-spacing:.4px;color:var(--green-850)}
+    .hero p{margin:6px 0 0;color:var(--muted)}
+    .hero .date{margin-top:10px;font-size:14px;color:#738175}
+    .hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+    .hero-right{display:flex;justify-content:flex-end;align-items:flex-start;min-width:260px}
+
+    .logo-card{background:linear-gradient(180deg,var(--green-900),#0f3026);color:#fff;border-radius:18px;padding:14px 16px;min-width:250px;display:flex;gap:12px;align-items:center;box-shadow:0 12px 32px rgba(0,0,0,.12)}
+    .logo-mark{width:64px;height:64px;border-radius:14px;background:rgba(229,201,139,.12);display:grid;place-items:center;flex:0 0 auto}
+    .logo-mark svg{width:48px;height:48px}
+    .logo-lines{line-height:1.04}
+    .logo-lines .l1{font-size:14px;font-weight:800;letter-spacing:1.2px;color:var(--gold-2)}
+    .logo-lines .l2{font-size:28px;font-weight:900;letter-spacing:.4px;color:var(--gold)}
+    .logo-lines .l3{font-size:11px;color:#d7e3db;margin-top:6px;letter-spacing:.8px;text-transform:uppercase}
+
+    .toptools{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin:18px 0 10px}
+    .layoutinfo{background:#e3eae2;border-radius:10px;padding:12px;margin-bottom:16px;font-size:13px;color:#54705d}
+    .btn{border:0;background:var(--green-700);color:white;border-radius:10px;padding:12px 16px;font-weight:650}
+    .btn.secondary{background:white;color:#244b3a;border:1px solid #ccd8cd}
+    .btn.danger{background:#a13e39}
+    .btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #c7a76c}
+
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin:12px 0 22px}
+    .stat{background:white;padding:17px;border:1px solid var(--border);border-radius:14px;position:relative;overflow:hidden}
+    .stat::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--green-700),var(--gold))}
+    .stat b{font-size:30px;display:block}
+    .stat span{color:var(--muted);font-size:13px}
+
+    .tools{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+    .tools input,.tools select{background:white;border:1px solid #d4ddd2;border-radius:9px;padding:12px;min-height:45px}
+    .tools input{flex:1;min-width:220px}
+
+    .list{display:grid;gap:10px}
+    .task{background:white;border:1px solid var(--border);border-radius:14px;padding:17px;display:grid;grid-template-columns:1fr auto;gap:15px;align-items:center}
+    .task h3{margin:0 0 7px;font-size:17px}
+    .muted{font-size:13px;color:#6b7b70;line-height:1.7}
+    .chips{display:flex;gap:6px;flex-wrap:wrap}
+    .chip{font-size:12px;padding:4px 8px;border-radius:20px;background:#e7eee9}
+    .chip.critica{background:#ffdbda;color:#942f2a}
+    .chip.urgente{background:#ffe8c5;color:#8a4f00}
+    .chip.concluida{background:#d7efdb;color:#245b38}
+    .task .actions{justify-content:flex-end;display:flex;gap:9px;flex-wrap:wrap}
+
+    .section{display:none}
+    .section.active{display:block}
+    .empty{background:white;border-radius:12px;padding:35px;text-align:center;color:#64766c;border:1px solid var(--border)}
+    .agenda{display:grid;gap:10px}
+    .agenda-item{border-left:5px solid #bb9b60;background:white;padding:13px 17px;border-radius:10px;border:1px solid var(--border)}
+
+    .modal{position:fixed;inset:0;background:#091d15aa;display:none;align-items:center;justify-content:center;padding:12px;z-index:10}
+    .modal.show{display:flex}
+    .dialog{background:white;padding:25px;width:min(620px,100%);border-radius:18px;max-height:94vh;overflow:auto;box-shadow:0 18px 70px #001b1644}
+    .dialog h2{margin-top:0}
+    .fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .field{display:flex;flex-direction:column;gap:6px}
+    .field.full{grid-column:1/-1}
+    .field label{font-weight:650;font-size:13px}
+    .field input,.field select,.field textarea{border:1px solid #cbd9cd;border-radius:8px;padding:11px;min-width:0;width:100%}
+    .field textarea{min-height:85px}
+    .dialogfooter{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+    .notice{padding:12px;border-radius:10px;background:#fff4da;color:#73500c;margin-bottom:14px}
+
+    .login-wrap{min-height:100vh;display:grid;place-items:center;padding:28px}
+    .login{max-width:500px;width:100%;background:white;padding:30px;border-radius:20px;box-shadow:0 16px 40px rgba(24,55,35,.10);border:1px solid var(--border)}
+    .login-top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px}
+    .login-top h1{margin:6px 0 0;font-size:32px;color:var(--green-850)}
+    .login-top p{margin:8px 0 0;color:var(--muted)}
+    .login-logo{width:96px}
+    .login-logo .logo-card{min-width:auto;padding:12px}
+    .login input{width:100%;border:1px solid #cbd9cd;border-radius:9px;padding:12px;margin:8px 0 14px}
+    .login button{width:100%}
+
+    #toast{position:fixed;bottom:15px;right:15px;background:#193f32;color:white;padding:12px 18px;border-radius:12px;display:none;z-index:20;max-width:360px}
+
+    @media(max-width:1080px){
+      .hero{flex-direction:column}
+      .hero-right{width:100%;justify-content:flex-start}
+    }
+    @media(max-width:880px){
+      .app{grid-template-columns:1fr}
+      aside{padding:14px;gap:9px}
+      .brand{padding:4px;border:0}
+      .brand-sub{font-size:16px}
+      .nav{display:flex;overflow:auto}
+      .nav button{white-space:nowrap}
+      .foot{display:none}
+      main{padding:15px}
+      .stats{grid-template-columns:repeat(2,1fr)}
+      .task{grid-template-columns:1fr}
+      .task .actions{justify-content:flex-start}
+      .fields{grid-template-columns:1fr}
+      .login-top{flex-direction:column}
+      .hero h1{font-size:28px}
+      .logo-card{min-width:0;width:100%}
+    }
+  </style>
+</head>
+<body>
+  <div id="login" class="login-wrap hidden">
+    <div class="login">
+      <div class="login-top">
+        <div>
+          <div class="eyebrow">Chácara das Orquídeas</div>
+          <h1>GESTÃO OPERACIONAL</h1>
+          <p>Farmácia • tarefas, ocorrências e agenda</p>
+        </div>
+        <div class="login-logo">
+          <div class="logo-card">
+            <div class="logo-mark">
+              <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M20 44c3-7 8-11 14-11 6 0 11 4 14 11" stroke="#D7B375" stroke-width="3.2" stroke-linecap="round"/>
+                <path d="M24 30c-1-8 4-14 8-14s9 6 8 14" stroke="#D7B375" stroke-width="3.2" stroke-linecap="round"/>
+                <circle cx="28" cy="30" r="1.6" fill="#E5C98B"/>
+                <circle cx="36" cy="30" r="1.6" fill="#E5C98B"/>
+                <path d="M32 34c1.5 0 3 .8 4 2-1 .9-2.5 1.5-4 1.5s-3-.6-4-1.5c1-1.2 2.5-2 4-2Z" fill="#E5C98B"/>
+                <path d="M48 15c4 0 7 3 7 7-4 0-7-3-7-7Z" fill="#D7B375"/>
+                <path d="M43 19c0 5 4 9 9 9 0-5-4-9-9-9Z" fill="#E5C98B"/>
+                <path d="M45 28c0 4 3 7 7 7 0-4-3-7-7-7Z" fill="#D7B375"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="setupAlert" class="notice hidden">Configure o arquivo <strong>firebase-config.js</strong> antes de usar.</div>
+      <form id="loginForm">
+        <label>E-mail da conta do dispositivo</label>
+        <input id="email" type="email" required autocomplete="username">
+        <label>Senha</label>
+        <input id="password" type="password" required autocomplete="current-password">
+        <button class="btn" type="submit">Entrar</button>
+      </form>
+      <p class="muted">As contas são criadas pelo administrador no Firebase Authentication.</p>
+    </div>
+  </div>
+
+  <div id="app" class="app hidden">
+    <aside>
+      <div class="brand">
+        <div class="brand-mark">
+          <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M20 44c3-7 8-11 14-11 6 0 11 4 14 11" stroke="#D7B375" stroke-width="3.2" stroke-linecap="round"/>
+            <path d="M24 30c-1-8 4-14 8-14s9 6 8 14" stroke="#D7B375" stroke-width="3.2" stroke-linecap="round"/>
+            <circle cx="28" cy="30" r="1.6" fill="#E5C98B"/>
+            <circle cx="36" cy="30" r="1.6" fill="#E5C98B"/>
+            <path d="M32 34c1.5 0 3 .8 4 2-1 .9-2.5 1.5-4 1.5s-3-.6-4-1.5c1-1.2 2.5-2 4-2Z" fill="#E5C98B"/>
+            <path d="M48 15c4 0 7 3 7 7-4 0-7-3-7-7Z" fill="#D7B375"/>
+            <path d="M43 19c0 5 4 9 9 9 0-5-4-9-9-9Z" fill="#E5C98B"/>
+            <path d="M45 28c0 4 3 7 7 7 0-4-3-7-7-7Z" fill="#D7B375"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">Módulo</div>
+          <div class="brand-sub">GESTÃO OPERACIONAL</div>
+        </div>
+      </div>
+
+      <div class="nav">
+        <button class="active" data-page="tarefas">☑ Tarefas e ocorrências</button>
+        <button data-page="agenda">▦ Agenda</button>
+        <button data-page="historico">✓ Histórico</button>
+      </div>
+
+      <div class="foot">
+        <div id="userLabel">Conectando...</div>
+        <div id="roleLabel"></div>
+        <button class="btn secondary" id="logout" style="margin-top:12px">Sair</button>
+      </div>
+    </aside>
+
+    <main>
+      <div class="hero">
+        <div class="hero-left">
+          <div class="eyebrow">Chácara das Orquídeas</div>
+          <h1 id="pageTitle">GESTÃO OPERACIONAL</h1>
+          <p id="sectionName">Central de tarefas, ocorrências e agenda</p>
+          <div class="date" id="today"></div>
+          <div class="hero-actions">
+            <button class="btn secondary" id="refresh">↻ Atualizar</button>
+            <button class="btn" id="new">+ Nova ocorrência / tarefa</button>
+          </div>
+        </div>
+
+        <div class="hero-right">
+          <div class="logo-card" aria-label="Logo da Chácara das Orquídeas">
+            <div class="logo-mark">
+              <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M20 44c3-7 8-11 14-11 6 0 11 4 14 11" stroke="#D7B375" stroke-width="3.2" stroke-linecap="round"/>
+                <path d="M24 30c-1-8 4-14 8-14s9 6 8 14" stroke="#D7B375" stroke-width="3.2" stroke-linecap="round"/>
+                <circle cx="28" cy="30" r="1.6" fill="#E5C98B"/>
+                <circle cx="36" cy="30" r="1.6" fill="#E5C98B"/>
+                <path d="M32 34c1.5 0 3 .8 4 2-1 .9-2.5 1.5-4 1.5s-3-.6-4-1.5c1-1.2 2.5-2 4-2Z" fill="#E5C98B"/>
+                <path d="M48 15c4 0 7 3 7 7-4 0-7-3-7-7Z" fill="#D7B375"/>
+                <path d="M43 19c0 5 4 9 9 9 0-5-4-9-9-9Z" fill="#E5C98B"/>
+                <path d="M45 28c0 4 3 7 7 7 0-4-3-7-7-7Z" fill="#D7B375"/>
+              </svg>
+            </div>
+            <div class="logo-lines">
+              <div class="l1">CHÁCARA DAS</div>
+              <div class="l2">ORQUÍDEAS</div>
+              <div class="l3">Gestão operacional</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="toptools"></div>
+      <div id="roleInfo" class="layoutinfo"></div>
+
+      <section class="section active" id="tarefas">
+        <div class="stats">
+          <div class="stat"><b id="statOpen">0</b><span>Em aberto</span></div>
+          <div class="stat"><b id="statProgress">0</b><span>Em andamento</span></div>
+          <div class="stat"><b id="statUrgent">0</b><span>Críticas / urgentes</span></div>
+          <div class="stat"><b id="statDone">0</b><span>Concluídas</span></div>
+        </div>
+
+        <div class="tools">
+          <input id="search" placeholder="Buscar por título, local ou responsável">
+          <select id="filter">
+            <option value="ativas">Pendentes e andamento</option>
+            <option value="todas">Todas</option>
+            <option value="criticas">Somente urgentes</option>
+            <option value="minhas">Do meu setor / responsável</option>
+          </select>
+        </div>
+
+        <div class="list" id="taskList"></div>
+      </section>
+
+      <section class="section" id="agenda">
+        <h2>Agenda de eventos</h2>
+        <p class="muted">Compromissos e tarefas com prazo, ordenados por data.</p>
+        <div class="agenda" id="agendaList"></div>
+      </section>
+
+      <section class="section" id="historico">
+        <h2>Atividades concluídas</h2>
+        <div class="list" id="historyList"></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal" id="editor">
+    <div class="dialog">
+      <h2 id="editorTitle">Nova tarefa ou ocorrência</h2>
+      <form id="taskForm">
+        <div class="fields">
+          <div class="field full">
+            <label for="title">Descrição resumida *</label>
+            <input id="title" maxlength="130" required placeholder="Ex.: Portão do lote 2 quebrado">
+          </div>
+          <div class="field">
+            <label for="type">Tipo</label>
+            <select id="type">
+              <option>Ocorrência</option>
+              <option>Tarefa</option>
+              <option>Evento</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="priority">Prioridade</label>
+            <select id="priority">
+              <option>Normal</option>
+              <option>Baixa</option>
+              <option>Urgente</option>
+              <option>Crítica</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="sector">Setor</label>
+            <select id="sector">
+              <option>Farmácia</option>
+              <option>Ordenha</option>
+              <option>Sala do tanque</option>
+              <option>Alimentação</option>
+              <option>Lote 1</option>
+              <option>Lote 2</option>
+              <option>Lote 3</option>
+              <option>Lote 4</option>
+              <option>Manutenção</option>
+              <option>Pátio e acessos</option>
+              <option>Escritório</option>
+              <option>Outros</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="assignee">Responsável</label>
+            <input id="assignee" maxlength="80" placeholder="Nome do responsável">
+          </div>
+          <div class="field">
+            <label for="due">Prazo ou data do evento</label>
+            <input id="due" type="datetime-local">
+          </div>
+          <div class="field full">
+            <label for="details">Detalhes adicionais</label>
+            <textarea id="details" maxlength="3000"></textarea>
+          </div>
+        </div>
+        <div class="dialogfooter">
+          <button type="button" class="btn secondary" data-close="editor">Cancelar</button>
+          <button class="btn" id="saveTask" type="submit">Registrar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="complete">
+    <div class="dialog">
+      <h2 id="completeTitle">Confirmar atividade</h2>
+      <form id="completeForm">
+        <div class="notice">O nome informado serve como registro operacional, não como autenticação forte. O login da conta também ficará registrado.</div>
+        <div class="fields">
+          <div class="field full">
+            <label for="worker">Nome de quem executou *</label>
+            <input id="worker" maxlength="80" required>
+          </div>
+          <div class="field full">
+            <label for="completionNote">Observação / solução realizada</label>
+            <textarea id="completionNote" maxlength="1500" placeholder="O que foi feito?"></textarea>
+          </div>
+        </div>
+        <div class="dialogfooter">
+          <button class="btn secondary" type="button" data-close="complete">Cancelar</button>
+          <button class="btn" id="confirmAction" type="submit">Confirmar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast" role="status"></div>
+
+  <script src="./firebase-config.js"></script>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
