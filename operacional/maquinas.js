@@ -22,7 +22,7 @@ const dateLabel=s=>/^\d{4}-\d{2}-\d{2}$/.test(String(s||""))?String(s).split("-"
 const machineName=m=>[m.marca,m.modelo].filter(Boolean).join(" ");
 const countNum=v=>v===null||v===undefined||v===""?null:Number(v);
 function message(text,warning=false){const el=$("machineMessage");el.textContent=text;el.classList.toggle("warn",warning)}
-function diffDays(to){const x=new Date(to+"T12:00:00");return Math.ceil((x-new Date())/86400000)}
+function diffDays(to){const x=new Date(to+"T12:00:00");const now=new Date();const today=new Date(now.getFullYear(),now.getMonth(),now.getDate(),12);return Math.round((x-today)/86400000)}
 function plusMonths(date,n){
   const [y,m,d]=date.split("-").map(Number),month=new Date(y,m-1+n,1),last=new Date(month.getFullYear(),month.getMonth()+1,0).getDate();
   const target=new Date(month.getFullYear(),month.getMonth(),Math.min(d,last),12);
