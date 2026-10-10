@@ -71,7 +71,10 @@ const sectionLabel = {
   usuarios: 'Gestão de Usuários'
 };
 
-const modal = (id, open) => $(id).classList.toggle('show', open);
+const modal = (id, open) => {
+  $(id).classList.toggle('show', open);
+  if(id==='detail'&&!open&&unsubscribeNotes){unsubscribeNotes();unsubscribeNotes=null;currentNotes=[]}
+};
 
 $('today').textContent = new Date().toLocaleDateString('pt-BR', { dateStyle: 'full' });
 
@@ -423,13 +426,70 @@ function openEditorNew(type,date){
   modal('editor',true);
 }
 
+function formatNoteTime(value){
+  return value?.toDate?.()?.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'})||'Registrando...';
+}
+function noteLogRef(id){return collection(db,'tarefas',id,'atualizacoes')}
+function renderTaskNotes(){
+  const task=items.find(t=>t.id===viewId);
+  const completed=task?.status==='concluida';
+  $('taskNoteForm').hidden=!task||completed||isRecurring(task);
+  $('noteCount').textContent=currentNotes.length+' '+(currentNotes.length===1?'Atualização':'Atualizações');
+  const notes=[...currentNotes];
+  // Compatibilidade: exibe solução de tarefas concluídas antes da timeline.
+  const legacy=task?.completionNote&&!notes.some(n=>n.tipo==='concluida');
+  const html=notes.map(n=>'<article class="call-note"><div class="call-note-head"><strong>'+
+    esc(n.autor||n.createdByEmail||'Usuário')+' · '+esc(n.tipo==='andamento'?'Iniciou':n.tipo==='concluida'?'Concluiu':'Nota')+
+    '</strong><time>'+esc(formatNoteTime(n.createdAt))+'</time></div><p>'+esc(n.texto||'')+'</p></article>').join('');
+  $('taskNotesList').innerHTML=html+(legacy?'<article class="call-note"><div class="call-note-head"><strong>'+
+    esc(task.completedBy||'Responsável')+' · Concluiu</strong><time>'+esc(task.completedAtLocal||'')+'</time></div><p>'+
+    esc(task.completionNote)+'</p></article>':'')||'<div class="muted">Ainda Não Existem Atualizações. O Relato Inicial Está Preservado Acima.</div>';
+}
+function attachTaskNotes(id){
+  if(unsubscribeNotes){unsubscribeNotes();unsubscribeNotes=null}
+  currentNotes=[];
+  $('taskNotesList').textContent='Carregando Histórico...';
+  unsubscribeNotes=onSnapshot(query(noteLogRef(id),orderBy('createdAt','asc')),snapshot=>{
+    if(viewId!==id)return;
+    currentNotes=snapshot.docs.map(d=>({id:d.id,...d.data()}));
+    renderTaskNotes();
+  },err=>{
+    console.error(err);
+    $('taskNotesList').textContent='Falha ao Carregar as Notas. Atualize as Regras do Firebase.';
+  });
+}
+$('taskNoteForm').onsubmit=async event=>{
+  event.preventDefault();
+  if(!user||!viewId)return;
+  const task=items.find(t=>t.id===viewId),texto=$('taskNoteText').value.trim();
+  if(!task||task.status==='concluida'||isRecurring(task)){toast('O Chamado Não Está Aberto para Novas Notas.');return}
+  if(!texto||texto.length>1500){toast('Informe Uma Nota de Até 1.500 Caracteres.');return}
+  $('taskNoteSave').disabled=true;
+  try{
+    await addDoc(noteLogRef(viewId),{
+      tipo:'nota',texto,autor:user.email||'Usuário',
+      createdByUid:user.uid,createdByEmail:user.email||'',createdAt:serverTimestamp()
+    });
+    $('taskNoteText').value='';
+    toast('Nota Adicionada ao Histórico do Chamado.');
+  }catch(err){console.error(err);toast('Não Foi Possível Salvar a Nota: '+(err.code||err.message))}
+  finally{$('taskNoteSave').disabled=false}
+};
+
 function showDetailNew(id,occurrenceDate=''){
   const t=items.find(x=>x.id===id);if(!t)return;
   viewId=id;
   $('detailTitle').textContent=capWords(t.title);
   const values=[['Tipo',t.type],['Status',stateLabel[t.status]||t.status],['Prioridade',t.priority],['Setor',t.sector],['Responsável',t.assignee||'Não Definido'],['Data e Horário',ptDate(occurrenceDate&&isRecurring(t)?occurrenceDate+String(t.dueAt).slice(10):t.dueAt)],...(isRecurring(t)?[['Repetição',recurrenceLabel(t)],['Fim da Repetição',t.recurrenceUntil?ptDate(t.recurrenceUntil):'Sem Data Final']]:[])];
   $('detailContent').innerHTML=(isRecurring(t)?'<p class="recurrence-explanation">↻ Atividade Recorrente. A Exclusão Remove Toda a Série.</p>':'')+'<div class="detail-grid">'+values.map(([a,b])=>'<div><strong>'+esc(a)+'</strong><span>'+esc(b)+'</span></div>').join('')+'</div><strong>Detalhes</strong><div class="detail-note">'+esc(t.details||'Sem Detalhes Adicionais.')+'</div>';
-  $('openDelete').classList.toggle('auth-hidden',role!=='admin');modal('detail',true)
+  if(t.status==='concluida'&&t.completedBy){
+    $('detailContent').innerHTML+='<div class="call-original"><strong>Conclusão</strong><p>'+
+      esc(t.completedBy)+' · '+esc(t.completedAtLocal||'')+'</p></div>';
+  }
+  $('openDelete').classList.toggle('auth-hidden',role!=='admin');
+  $('taskNoteText').value='';
+  modal('detail',true);
+  attachTaskNotes(id);
 }
 
 function confirmDeleteNew(id){
@@ -442,7 +502,11 @@ async function deleteNowNew(){
   if(role!=='admin'||!deleteId||!user)return;
   const t=items.find(x=>x.id===deleteId);if(!t)return;
   $('confirmDelete').disabled=true;
-  try{const batch=writeBatch(db);
+  try{
+    const existingNotes=await getDocs(noteLogRef(deleteId));
+    if(existingNotes.size>400){toast('Há Muitas Notas. Contate o Administrador para Excluir com Segurança.');return}
+    const batch=writeBatch(db);
+    existingNotes.forEach(note=>batch.delete(note.ref));
     batch.delete(doc(db,'tarefas',deleteId));
     batch.set(doc(collection(db,'auditoria')),{taskId:deleteId,action:'exclusao',actorUid:user.uid,actorEmail:user.email,actorName:'Administrador',note:(t.type+': '+t.title).slice(0,1500),at:serverTimestamp()});
     await batch.commit();modal('deleteConfirm',false);deleteId='';toast('Atividade Excluída. Registro de Auditoria Salvo.');
@@ -472,7 +536,12 @@ $('addCalendarEvent').onclick=()=>openEditorNew('Evento',selectedDay);
 
 $('calendarGrid').onclick=e=>{const b=e.target.closest('[data-day]');if(!b)return;selectedDay=b.dataset.day;if(b.dataset.outside==='true'){const [y,m]=selectedDay.split('-').map(Number);monthCursor=new Date(y,m-1,1)}renderCalendarNew()};
 
-document.addEventListener('click',e=>{const d=e.target.closest('[data-detail]');if(d){showDetailNew(d.dataset.detail,d.dataset.occurrenceDate||'');return}const remove=e.target.closest('[data-delete]');if(remove){confirmDeleteNew(remove.dataset.delete);return}const b=e.target.closest('[data-status]');if(b){pendingId=b.dataset.id;pendingStatus=b.dataset.status;$('completeForm').reset();$('completeTitle').textContent=b.dataset.status==='concluida'?'Concluir Atividade':'Iniciar Atividade';modal('complete',true)}});
+document.addEventListener('click',e=>{const d=e.target.closest('[data-detail]');if(d){showDetailNew(d.dataset.detail,d.dataset.occurrenceDate||'');return}const remove=e.target.closest('[data-delete]');if(remove){confirmDeleteNew(remove.dataset.delete);return}const b=e.target.closest('[data-status]');if(b){pendingId=b.dataset.id;pendingStatus=b.dataset.status;$('completeForm').reset();$('completeTitle').textContent=b.dataset.status==='concluida'?'Concluir Atividade':'Iniciar Atividade';
+const task=items.find(t=>t.id===pendingId);
+$('actionOriginalDescription').textContent=task?.details||'Sem Descrição Original.';
+$('actionRecentNotes').textContent=currentNotes.length&&viewId===pendingId?currentNotes.slice(-3).map(n=>(n.autor||n.createdByEmail||'Usuário')+': '+n.texto).join('\n'):'Consulte o Histórico Completo no Ícone de Detalhes.';
+$('completionNoteLabel').textContent=b.dataset.status==='concluida'?'Solução / Nota de Conclusão':'Nota de Andamento (Opcional)';
+modal('complete',true)}});
 
 $('openDelete').onclick=()=>{modal('detail',false);confirmDeleteNew(viewId)};
 
@@ -510,6 +579,8 @@ $('taskForm').onsubmit = async function(event){
 $('completeForm').onsubmit = async (e) => {
   e.preventDefault();
   if (!pendingId || !user) return;
+  const activeTask=items.find(t=>t.id===pendingId);
+  if(!activeTask||isRecurring(activeTask)||activeTask.status==='concluida')return;
 
   const name = $('worker').value.trim();
   if (!name) return;
@@ -535,6 +606,12 @@ $('completeForm').onsubmit = async (e) => {
   try {
     const batch = writeBatch(db);
     batch.update(doc(db, 'tarefas', pendingId), updates);
+    batch.set(doc(noteLogRef(pendingId)),{
+      tipo:pendingStatus==='concluida'?'concluida':'andamento',
+      texto:$('completionNote').value.trim()||(pendingStatus==='concluida'?'Chamado Concluído.':'Chamado Iniciado.'),
+      autor:name,createdByUid:user.uid,createdByEmail:user.email||'',
+      createdAt:serverTimestamp()
+    });
     batch.set(doc(collection(db, 'auditoria')), {
       taskId: pendingId,
       action: pendingStatus,
@@ -581,6 +658,7 @@ if (!cfg?.apiKey || !cfg?.projectId) {
       unsubscribeSettings();
       unsubscribeSettings = null;
     }
+    if(unsubscribeNotes){unsubscribeNotes();unsubscribeNotes=null;currentNotes=[]}
     user = current;
     items = [];
 
