@@ -128,8 +128,8 @@ async function deleteMachineReview(id){
     if(isLatest){
       const previous=remaining[0];
       batch.update(doc(db,COLLECTION,chosenId),{
-        ultimaTrocaData:previous?.data||'',
-        ultimaTrocaHoras:previous?.horimetro??null,
+        ultimaTrocaData:previous?.data||old.anteriorData||'',
+        ultimaTrocaHoras:previous?.horimetro??old.anteriorHorimetro??null,
         updatedAt:serverTimestamp()
       });
     }
@@ -212,7 +212,7 @@ async function saveOil(event){
   if(date>machineTodayISO()){message("A Data da Troca Não Pode Estar no Futuro.",true);return}
   if(m.ultimaTrocaData&&date<m.ultimaTrocaData){message("A Data É Anterior à Última Troca. Corrija a Data.",true);return}
   if(hour!=null&&m.ultimaTrocaHoras!=null&&hour<m.ultimaTrocaHoras){message("O Horímetro Não Pode Ser Inferior ao da Última Troca.",true);return}
-  const review={tipo:"Troca de Óleo",data:date,horimetro:hour,observacoes:$("oilNotes").value.trim(),createdAt:serverTimestamp(),createdByUid:currentUser.uid};
+  const review={tipo:"Troca de Óleo",data:date,horimetro:hour,observacoes:$("oilNotes").value.trim(),anteriorData:m.ultimaTrocaData||"",anteriorHorimetro:m.ultimaTrocaHoras??null,createdAt:serverTimestamp(),createdByUid:currentUser.uid};
   const batch=writeBatch(db),oid=doc(collection(db,COLLECTION,chosenId,"revisoes"));
   batch.set(oid,review);
   const update={ultimaTrocaData:date,ultimaTrocaHoras:hour,updatedAt:serverTimestamp()};
