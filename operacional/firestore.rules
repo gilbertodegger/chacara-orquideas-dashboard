@@ -106,7 +106,7 @@ service cloud.firestore {
     match /tarefas/{taskId} {
       allow read: if active();
       allow create: if active()
-        && request.resource.data.keys().hasOnly(['title','type','priority','sector','assignee','dueAt','details','status','createdByUid','createdByEmail','createdAt','updatedAt'])
+        && request.resource.data.keys().hasOnly(['title','type','priority','sector','assignee','dueAt','details','status','createdByUid','createdByEmail','createdAt','updatedAt','recurrence','recurrenceUntil'])
         && request.resource.data.createdByUid == request.auth.uid
         && request.resource.data.status == 'aberta'
         && request.resource.data.title is string
@@ -125,6 +125,56 @@ service cloud.firestore {
         && request.resource.data.details.size() <= 3000
         && request.resource.data.dueAt is string
         && request.resource.data.dueAt.size() <= 25
+        // Campos opcionais preservam a compatibilidade com tarefas antigas.
+        && request.resource.data.get('recurrence','none') in ['none','weekly']
+        && request.resource.data.get('recurrenceUntil','') is string
+        && request.resource.data.get('recurrenceUntil','').size() <= 10
+        && request.resource.data.get('recurrenceUntil','').matches('^([0-9]{4}-[0-9]{2}-[0-9]{2})?
+        && request.resource.data.createdByEmail == request.auth.token.email
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update: if active()
+        && resource.data.get('recurrence','none') != 'weekly'
+        && resource.data.status in ['aberta','andamento']
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status','updatedAt','lastActionByUid','lastActionByEmail','lastActionByName',
+          'completedBy','completedByUid','completedAt','completedAtLocal','completionNote'
+        ])
+        && request.resource.data.status in ['andamento','concluida']
+        && (request.resource.data.status == 'concluida' || resource.data.status == 'aberta')
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.lastActionByUid == request.auth.uid
+        && request.resource.data.lastActionByName is string
+        && request.resource.data.lastActionByName.size() > 0
+        && (request.resource.data.status != 'concluida' || (
+          request.resource.data.completedByUid == request.auth.uid &&
+          request.resource.data.completedAt == request.time
+        ));
+      allow delete: if admin();
+    }
+    match /auditoria/{logId} {
+      allow read: if active();
+      allow create: if active()
+        && request.resource.data.keys().hasOnly(['taskId','action','actorUid','actorEmail','actorName','note','at'])
+        && request.resource.data.actorUid == request.auth.uid
+        && request.resource.data.action in ['andamento','concluida','exclusao']
+        && (request.resource.data.action != 'exclusao' || admin())
+        && request.resource.data.actorEmail == request.auth.token.email
+        && request.resource.data.actorName is string
+        && request.resource.data.actorName.size() > 0
+        && request.resource.data.actorName.size() <= 80
+        && request.resource.data.note is string
+        && request.resource.data.note.size() <= 1500
+        && request.resource.data.at == request.time;
+      allow update, delete: if false;
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}
+)
+        && (request.resource.data.get('recurrence','none') != 'weekly' ||
+          (admin() && request.resource.data.type == 'Evento'
+            && request.resource.data.dueAt.size() >= 10))
         && request.resource.data.createdByEmail == request.auth.token.email
         && request.resource.data.createdAt == request.time
         && request.resource.data.updatedAt == request.time;
