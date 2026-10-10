@@ -380,6 +380,40 @@ main{padding:18px 20px 26px}
 .calendar-event.recurring{border-left:2px solid #488269}
 .agenda-entry .repeat-indicator{font-weight:750;color:#346a4a}
 .chip.recurrence{background:#e5f0e9;color:#285a41}
+
+/* Manutenção da Ordenha — Dashboard Compacto */
+.milk-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:0 0 13px}
+.milk-shell{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start}
+.milk-panel{background:#fff;border:1px solid var(--border);border-radius:14px;padding:15px;min-width:0}
+.milk-panel h3{margin:0;font-size:16px}
+.milk-panel h4{font-size:14px;margin:16px 0 8px}
+.milk-status{display:inline-flex;align-items:center;border-radius:20px;background:#e6eee6;color:#48604c;padding:8px 12px;font-size:12px;font-weight:800}
+.milk-status.overdue{color:#a83230;background:#ffe1df}
+.milk-status.soon{color:#825006;background:#fff0d4}
+.milk-mini-badge{font-size:11px;font-weight:750;border-radius:9px;background:#ecf3e9;color:#3c694f;padding:6px 9px}
+.milk-panel .fields{gap:10px}
+.milk-panel .field input,.milk-panel .field textarea{border:1px solid #d2dcd1;border-radius:9px;padding:10px;min-width:0}
+.milk-panel .field label{font-size:12px}
+.milk-panel .field textarea{min-height:78px}
+.milk-results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.milk-results>div{padding:12px;background:#f4f7f3;border-radius:10px;display:flex;flex-direction:column;gap:7px}
+.milk-results span{font-size:11px;color:#6a7d6e}
+.milk-results strong{font-size:17px;color:#284939}
+.milk-explainer{font-size:12px;line-height:1.55;color:#586f5c;background:#eef4ea;padding:11px;border-radius:9px}
+.milk-math{font-size:11px;line-height:1.7;color:#416149;padding:10px;border-left:3px solid #d6b16d;background:#fcfaf3}
+.milk-caveat{font-size:11px;line-height:1.65;color:#79857b}
+.milk-history{display:flex;flex-direction:column;gap:7px}
+.milk-history-row{display:grid;grid-template-columns:1fr auto;gap:4px 8px;border:1px solid #e6eee4;border-radius:9px;padding:9px 10px}
+.milk-history-row strong{font-size:12px}
+.milk-history-row span{font-size:11px;color:#426549}
+.milk-history-row p{grid-column:1/-1;font-size:11px;margin:0;color:#657b6d}
+.machine-settings-actions{display:flex;align-items:center;gap:5px}
+.machine-delete-icon{background:#fff1ef;color:#a73836;border:1px solid #ecc8c4;border-radius:9px;font-size:21px;width:36px;height:36px;display:grid;place-items:center;cursor:pointer}
+.machine-delete-confirm{background:#b23b38;color:#fff;padding:10px 14px;border:0;border-radius:10px;font-weight:750;cursor:pointer}
+.machine-delete-confirm:disabled{opacity:.5;cursor:not-allowed}
+.machine-delete-required{font-size:18px;font-weight:850;color:#a63836;margin:8px 0}
+@media(max-width:1100px){.milk-shell{grid-template-columns:1fr}}
+@media(max-width:700px){.milk-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.milk-panel{padding:12px}.milk-results{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
@@ -411,6 +445,7 @@ main{padding:18px 20px 26px}
 <button data-page="agenda">▦ Agenda</button>
 <button data-page="historico">✓ Histórico</button>
 <button data-page="maquinas" type="button">⚙ Revisão de Máquinas</button>
+<button data-page="ordenha" type="button">◷ Manutenção da Ordenha</button>
 <button class="auth-hidden" data-page="configuracoes" id="settingsNav" type="button">⚙ Configurações</button>
 </div>
 <div class="foot">
@@ -479,7 +514,7 @@ main{padding:18px 20px 26px}
 </div>
 <article id="machineDetail" class="machine-detail" hidden>
 <div class="machine-detail-head"><div><h3 id="machineTitle">Equipamento</h3><span class="oil-pill unknown" id="machineOilStatus">Sem Referência</span></div>
-<div class="machine-actions"><button id="editSelectedMachine" type="button" class="btn secondary" hidden>Editar</button><button id="logOilChange" type="button" class="btn" hidden>+ Registrar Troca de Óleo</button></div></div>
+<div class="machine-actions"><button id="editSelectedMachine" type="button" class="btn secondary" hidden>Editar</button><button id="deleteSelectedMachine" type="button" class="machine-delete-icon" title="Excluir Equipamento" aria-label="Excluir Equipamento" hidden>×</button><button id="logOilChange" type="button" class="btn" hidden>+ Registrar Troca de Óleo</button></div></div>
 <p id="machineNext" class="machine-next"></p>
 <div id="machineInfo" class="machine-detail-grid"></div>
 <div class="machine-detail-columns">
@@ -488,6 +523,49 @@ main{padding:18px 20px 26px}
 </div>
 <div class="machine-detail-panel machine-history-panel"><h4>Histórico de Revisões</h4><div id="machineHistory" class="oil-history"></div></div>
 </article>
+</div>
+</section>
+<section class="section" id="ordenha">
+<div class="machine-heading"><div><h2>Manutenção da Ordenha</h2><p class="muted">Controle da Vida Útil das Teteiras e Planejamento das Trocas.</p></div><span id="milkStatus" class="milk-status">Sem Referência</span></div>
+<p class="machine-hint" id="milkMessage" role="status">Carregando Parâmetros...</p>
+<div class="milk-stats">
+<div class="machine-stat"><strong id="milkDailyHours">—</strong><span>Horas por Conjunto / Dia</span></div>
+<div class="machine-stat"><strong id="milkDailyCycles">—</strong><span>Vacas por Conjunto / Dia</span></div>
+<div class="machine-stat"><strong id="milkUsedHours">—</strong><span>Horas Estimadas Desde a Troca</span></div>
+<div class="machine-stat"><strong id="milkNextChange">—</strong><span>Previsão da Próxima Troca</span></div>
+</div>
+<div class="milk-shell">
+<section class="milk-panel">
+<div class="machine-heading"><h3>Rotina da Ordenha</h3><span class="milk-mini-badge">3 Ordenhas / Dia</span></div>
+<form id="milkSetup">
+<div class="fields">
+<div class="field"><label for="milkSetCount">Conjuntos de Ordenha</label><input id="milkSetCount" type="number" min="1" max="100" step="1" value="12" required /></div>
+<div class="field"><label for="milkCowCount">Número de Vacas Ordenhadas</label><input id="milkCowCount" type="number" min="1" max="5000" step="1" placeholder="Vacas por Ordenha" /></div>
+<div class="field"><label for="milkDuration1">1ª Ordenha — Duração (Horas)</label><input id="milkDuration1" type="number" min="0.1" max="15" step="0.05" placeholder="Ex.: 2.5" /></div>
+<div class="field"><label for="milkDuration2">2ª Ordenha — Duração (Horas)</label><input id="milkDuration2" type="number" min="0.1" max="15" step="0.05" placeholder="Ex.: 2.5" /></div>
+<div class="field"><label for="milkDuration3">3ª Ordenha — Duração (Horas)</label><input id="milkDuration3" type="number" min="0.1" max="15" step="0.05" placeholder="Ex.: 2.5" /></div>
+<div class="field"><label for="milkLastChange">Data da Última Troca de Teteiras</label><input id="milkLastChange" type="date"/></div>
+<div class="field"><label for="milkLimitHours">Limite de Uso por Conjunto (Horas)</label><input id="milkLimitHours" type="number" min="1" step="0.1" placeholder="Conforme Fabricante" /></div>
+<div class="field"><label for="milkLimitCycles">Limite de Ordenhas por Conjunto</label><input id="milkLimitCycles" type="number" min="1" step="1" placeholder="Conforme Fabricante" /></div>
+<div class="field full"><label for="milkNotes">Observações da Manutenção</label><textarea id="milkNotes" maxlength="1500" placeholder="Marca e Modelo das Teteiras, Procedimentos e Observações"></textarea></div>
+</div>
+<div class="dialogfooter"><button id="milkSave" type="submit" class="btn">Salvar Parâmetros</button></div>
+</form>
+</section>
+<section class="milk-panel">
+<div class="machine-heading"><h3>Acompanhamento das Teteiras</h3><button class="btn" id="milkReplace" type="button" hidden>+ Registrar Troca</button></div>
+<div class="milk-results">
+<div><span>Dias Desde a Última Troca</span><strong id="milkDaysSince">—</strong></div>
+<div><span>Ordenhas Estimadas por Conjunto</span><strong id="milkUsedCycles">—</strong></div>
+<div><span>Horas Restantes por Conjunto</span><strong id="milkRemainingHours">—</strong></div>
+<div><span>Ordenhas Restantes por Conjunto</span><strong id="milkRemainingCycles">—</strong></div>
+</div>
+<p id="milkCalcExplanation" class="milk-explainer"></p>
+<div class="milk-math">Horas por Conjunto / Dia = Duração 1 + Duração 2 + Duração 3.<br/>Vacas por Conjunto / Dia = Vacas × 3 Ordenhas ÷ 12 Conjuntos (ou Quantidade Configurada).</div>
+<p class="milk-caveat"><strong>Atenção:</strong> Horas estimadas representam o tempo de uso dos conjuntos durante as sessões. Não substituem a contagem real de vácuo ou a recomendação técnica da GEA. A previsão assume a mesma rotina desde a última troca.</p>
+<h4>Histórico de Trocas</h4>
+<div id="milkHistoryList" class="milk-history"></div>
+</section>
 </div>
 </section>
 <section class="section" id="configuracoes">
@@ -521,6 +599,13 @@ main{padding:18px 20px 26px}
 </div><p class="muted">Intervalos Devem Ser Informados Conforme o Manual da Máquina. Campos Desconhecidos Podem Ficar em Branco.</p>
 <div class="dialogfooter"><button class="btn secondary" type="button" data-machine-close="machineEditor">Cancelar</button><button class="btn" type="submit" id="saveMachine">Salvar Equipamento</button></div>
 </form></div></div>
+<div class="modal" id="machineDeleteModal">
+<div class="dialog"><h2>Excluir Equipamento</h2><p class="muted">Você Vai Excluir Definitivamente <strong id="machineDeleteName"></strong> e Seu Histórico de Revisões. A Exclusão Será Registrada na Auditoria.</p>
+<label for="machineDeleteInput" class="machine-label">Digite o Modelo Exibido Abaixo para Confirmar:</label>
+<div id="machineDeleteRequired" class="machine-delete-required"></div>
+<input id="machineDeleteInput" class="config-input" type="text" autocomplete="off" placeholder="Digite o Modelo Exatamente" />
+<div class="dialogfooter"><button type="button" data-machine-close="machineDeleteModal" class="btn secondary">Cancelar</button><button id="deleteMachineConfirm" class="machine-delete-confirm" type="button" disabled>Excluir Permanentemente</button></div>
+</div></div>
 <div class="modal" id="oilModal"><div class="dialog">
 <h2>Registrar Troca de Óleo</h2><p class="muted" id="oilEquipmentName"></p>
 <form id="oilForm"><div class="fields">
@@ -528,6 +613,15 @@ main{padding:18px 20px 26px}
 <div class="field"><label for="oilHours">Horímetro no Serviço (h)</label><input id="oilHours" type="number" min="0" step="0.1" placeholder="Leitura no Momento"/></div>
 <div class="field full"><label for="oilNotes">Descrição e Observações</label><textarea id="oilNotes" maxlength="1500" placeholder="Serviços Realizados e Peças Utilizadas"></textarea></div>
 </div><div class="dialogfooter"><button class="btn secondary" type="button" data-machine-close="oilModal">Cancelar</button><button class="btn" type="submit" id="saveOil">Registrar Revisão</button></div></form></div></div>
+<div class="modal" id="milkReplaceModal"><div class="dialog"><h2>Registrar Troca de Teteiras</h2>
+<p class="muted">O Registro Atualiza a Data de Referência e Reinicia as Estimativas do Conjunto Completo.</p>
+<form id="milkChangeForm"><div class="fields">
+<div class="field"><label for="milkChangeDate">Data da Troca *</label><input id="milkChangeDate" type="date" required /></div>
+<div class="field"><label for="milkChangeCount">Conjuntos Substituídos</label><input id="milkChangeCount" type="number" min="1" max="100" step="1" required /></div>
+<div class="field full"><label for="milkChangeNote">Observações</label><textarea id="milkChangeNote" maxlength="1500" placeholder="Lote, Modelo das Teteiras e Detalhes da Troca"></textarea></div>
+</div><p class="milk-caveat">Trocas Parciais Exigem Registro Individual por Conjunto e Não Serão Aceitas Neste Controle.</p>
+<div class="dialogfooter"><button class="btn secondary" id="milkCancelChange" type="button">Cancelar</button><button class="btn" id="milkChangeSubmit" type="submit">Registrar Troca</button></div>
+</form></div></div>
 <div class="modal" id="editor">
 <div class="dialog">
 <h2 id="editorTitle">Nova Tarefa ou Ocorrência</h2>
@@ -635,5 +729,6 @@ main{padding:18px 20px 26px}
 <script src="./firebase-config.js"></script>
 <script src="./app.js" type="module"></script>
 <script src="./maquinas.js" type="module"></script>
+<script src="./ordenha.js" type="module"></script>
 </body>
 </html>
