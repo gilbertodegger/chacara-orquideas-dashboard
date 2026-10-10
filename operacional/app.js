@@ -10,7 +10,8 @@ import {
   query,
   orderBy,
   serverTimestamp,
-  writeBatch
+  writeBatch,
+  runTransaction
 } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
 
 const $ = (id) => document.getElementById(id);
@@ -22,6 +23,10 @@ let items = [];
 let unsubscribe = null;
 let pendingId = null;
 let pendingStatus = null;
+let unsubscribeSettings = null;
+let settings = null;
+let optionEdit = { category: null, id: null };
+let settingsWarning = '';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
   '&': '&amp;',
@@ -56,7 +61,8 @@ const stateLabel = {
 const sectionLabel = {
   tarefas: 'Tarefas e Ocorrências',
   agenda: 'Agenda de Eventos',
-  historico: 'Histórico de Atividades'
+  historico: 'Histórico de Atividades',
+  configuracoes: 'Configurações'
 };
 
 const modal = (id, open) => $(id).classList.toggle('show', open);
@@ -114,6 +120,163 @@ function capWords(text){
     return out;
   });
 }
+
+
+// Catálogos editáveis: valores por padrão preservados para que nenhuma implantação
+// seja necessária antes da primeira configuração do administrador.
+const SETTING_GROUPS=[
+  {key:'setores',label:'Setores',single:'Setor'},
+  {key:'responsaveis',label:'Responsáveis',single:'Responsável'},
+  {key:'tipos',label:'Tipos',single:'Tipo'}
+];
+const DEFAULT_SETTINGS={
+  setores:['Ordenha','Pátio e Acessos','Manutenção Máquinas','Manutenção Equipamentos','Confinamento','Escritório','Farmácia','Lavanderia','Alimentação','Sala do Tanque','Outros'],
+  responsaveis:['Gilberto','Teodoro','Marília','Funcionário'],
+  tipos:['Ocorrência','Tarefa','Evento']
+};
+const PROTECTED_TYPES=new Set(['Ocorrência','Evento']);
+const configDoc=()=>doc(db,'configuracoes','opcoes');
+const normalizedName=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLocaleLowerCase('pt-BR');
+const isProtected=(key,entry)=>key==='tipos'&&PROTECTED_TYPES.has(entry.nome);
+const defaults=()=>Object.fromEntries(SETTING_GROUPS.map(({key})=>[key,DEFAULT_SETTINGS[key].map((nome,index)=>({id:key+'-'+String(index+1).padStart(2,'0'),nome,ativo:true}))]));
+function readSettings(raw){
+  const basis=defaults();
+  if(!raw||typeof raw!=='object')return basis;
+  for(const {key} of SETTING_GROUPS){
+    const arr=raw[key];
+    if(!Array.isArray(arr))continue;
+    const unique=new Set();
+    basis[key]=arr.filter(entry=>entry&&typeof entry==='object'&&typeof entry.id==='string'&&entry.id.length<=90&&typeof entry.nome==='string'&&entry.nome.length<=80)
+      .filter(entry=>{const n=normalizedName(entry.nome);if(!n||unique.has(n))return false;unique.add(n);return true})
+      .map(entry=>({id:entry.id,nome:entry.nome.trim(),ativo:entry.ativo===true}));
+  }
+  // Os tipos internos são usados pelas regras de segurança e pelo calendário.
+  for(const type of PROTECTED_TYPES){
+    const item=basis.tipos.find(v=>v.nome===type);
+    if(item)item.ativo=true;
+    else basis.tipos.push({id:'tipo-essencial-'+normalizedName(type),nome:type,ativo:true});
+  }
+  return basis;
+}
+settings=defaults();
+function renderFormOptions(){
+  for(const [elementId,key] of [['sector','setores'],['assignee','responsaveis'],['type','tipos']]){
+    const select=$(elementId);
+    const selected=select.value;
+    const enabled=settings[key].filter(item=>item.ativo && (key!=='tipos'||role==='admin'||item.nome==='Ocorrência'));
+    select.replaceChildren();
+    if(key==='responsaveis'){
+      const empty=document.createElement('option');empty.value='';empty.textContent='Selecionar Responsável';select.append(empty);
+    }
+    for(const item of enabled){
+      const option=document.createElement('option');option.value=item.nome;option.textContent=item.nome;select.append(option);
+    }
+    if([...select.options].some(option=>option.value===selected))select.value=selected;
+    else if(key==='responsaveis')select.value='';
+    else if(key==='tipos'&&[...select.options].some(option=>option.value==='Ocorrência'))select.value='Ocorrência';
+    else select.selectedIndex=0;
+  }
+}
+const CFG_ICONS={
+  edit:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 17 0 3 3 0 12-12-3-3L4 17Z"/><path d="m14 7 3 3"/></svg>',
+  off:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9"/><path d="M6.4 5.4a9 9 0 1 0 11.2 0"/></svg>',
+  on:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>',
+  lock:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>'
+};
+function renderSettings(){
+  const wrap=$('settingsCards');
+  if(!wrap)return;
+  wrap.innerHTML=SETTING_GROUPS.map(({key,label})=>{
+    const entries=settings[key];
+    const activeCount=entries.filter(item=>item.ativo).length;
+    const rows=entries.map(item=>{
+      const locked=isProtected(key,item);
+      const editTitle=locked?'Tipo Essencial do Sistema':'Renomear Opção';
+      const toggleTitle=locked?'Tipo Essencial do Sistema':item.ativo?'Desativar Opção':'Reativar Opção';
+      return '<div class="config-item '+(item.ativo?'':'inactive')+'">'+
+        '<span class="config-item-name">'+esc(item.nome)+'</span>'+
+        (locked?'<span class="config-badge">Fixo</span>':!item.ativo?'<span class="config-badge">Inativo</span>':'')+
+        '<div class="config-row-actions">'+
+        '<button class="config-icon" type="button" data-option-action="edit" data-option-key="'+key+'" data-option-id="'+esc(item.id)+'" title="'+editTitle+'" aria-label="'+editTitle+': '+esc(item.nome)+'" '+(locked?'disabled':'')+'>'+CFG_ICONS.edit+'</button>'+
+        '<button class="config-icon '+(item.ativo?'warning':'reactivate')+'" type="button" data-option-action="toggle" data-option-key="'+key+'" data-option-id="'+esc(item.id)+'" title="'+toggleTitle+'" aria-label="'+toggleTitle+': '+esc(item.nome)+'" '+(locked?'disabled':'')+'>'+(locked?CFG_ICONS.lock:item.ativo?CFG_ICONS.off:CFG_ICONS.on)+'</button>'+
+        '</div></div>';
+    }).join('');
+    return '<article class="config-card"><div class="config-card-head"><div><h3>'+esc(label)+'</h3><span class="config-count">'+activeCount+' Ativas</span></div>'+
+      '<button class="btn config-add" type="button" data-option-action="add" data-option-key="'+key+'" title="Adicionar '+esc(label)+'" aria-label="Adicionar '+esc(label)+'">+</button></div>'+
+      '<div class="config-items">'+rows+'</div>'+
+      (key==='tipos'?'<p class="config-note">Ocorrência e Evento São Essenciais para o Funcionamento do Tablet e da Agenda.</p>':'')+'</article>';
+  }).join('');
+  const notice=$('settingsNotice');
+  if(settingsWarning){notice.textContent=settingsWarning;notice.classList.add('warn')}
+  else{notice.textContent='Alterações Salvas no Firebase São Sincronizadas Automaticamente com o Tablet e os Computadores.';notice.classList.remove('warn')}
+}
+function openOptionEditor(category,id=null){
+  if(role!=='admin'||!SETTING_GROUPS.some(x=>x.key===category))return;
+  const item=id?settings[category].find(x=>x.id===id):null;
+  if(id&&!item)return;
+  if(item&&isProtected(category,item)){toast('Esta Opção É Essencial para o Sistema.');return}
+  optionEdit={category,id};
+  $('optionForm').reset();
+  $('optionName').value=item?item.nome:'';
+  const group=SETTING_GROUPS.find(x=>x.key===category);
+  $('optionModalTitle').textContent=item?'Renomear '+group.single:'Adicionar '+group.single;
+  $('optionHelp').textContent='Esta Alteração Será Usada Apenas em Novos Registros. Os Registros Antigos Permanecem Intactos.';
+  modal('optionModal',true);
+  $('optionName').focus();
+}
+async function mutateOptions(category,action,id='',value=''){
+  if(role!=='admin'||!user)throw new Error('Somente o Administrador Pode Alterar Configurações.');
+  if(!SETTING_GROUPS.some(group=>group.key===category))throw new Error('Categoria Inválida.');
+  const fresh=capWords(String(value||'').replace(/\s+/g,' ').trim());
+  if(['add','edit'].includes(action)&&(fresh.length<2||fresh.length>80))throw new Error('O Nome Deve Ter de 2 a 80 Caracteres.');
+  await runTransaction(db,async transaction=>{
+    const snapshot=await transaction.get(configDoc());
+    const data=readSettings(snapshot.exists()?snapshot.data():null);
+    const entries=data[category];
+    const item=entries.find(x=>x.id===id);
+    if(action==='add'){
+      if(entries.length>=60)throw new Error('Limite de 60 Opções por Categoria.');
+      if(entries.some(x=>normalizedName(x.nome)===normalizedName(fresh)))throw new Error('Esta Opção Já Existe. Reative-a se Estiver Inativa.');
+      entries.push({id:'opt-'+String(Date.now())+'-'+Math.random().toString(36).slice(2,10),nome:fresh,ativo:true});
+    }else{
+      if(!item)throw new Error('Opção Não Encontrada. Atualize a Página.');
+      if(isProtected(category,item))throw new Error('Esta Opção É Essencial para o Sistema.');
+      if(action==='edit'){
+        if(entries.some(x=>x.id!==item.id&&normalizedName(x.nome)===normalizedName(fresh)))throw new Error('Já Existe Uma Opção com Este Nome.');
+        item.nome=fresh;
+      }else if(action==='toggle'){
+        if(item.ativo&&entries.filter(x=>x.ativo).length<=1)throw new Error('É Necessário Manter ao Menos Uma Opção Ativa.');
+        item.ativo=!item.ativo;
+      }else throw new Error('Operação Inválida.');
+    }
+    transaction.set(configDoc(),{...data,updatedByUid:user.uid,updatedAt:serverTimestamp()});
+  });
+}
+$('settingsCards').addEventListener('click',async e=>{
+  const button=e.target.closest('[data-option-action]');
+  if(!button||role!=='admin')return;
+  const {optionAction:action,optionKey:key,optionId:id}=button.dataset;
+  if(action==='add'||action==='edit')return openOptionEditor(key,id||null);
+  if(action==='toggle'){
+    const item=settings[key]?.find(x=>x.id===id);
+    if(!item)return;
+    if(item.ativo&&!confirm('Desativar "'+item.nome+'"? Esta Opção Não Aparecerá em Novos Registros.'))return;
+    button.disabled=true;
+    try{await mutateOptions(key,'toggle',id);toast(item.ativo?'Opção Desativada.':'Opção Reativada.')}
+    catch(error){console.error(error);toast('Não Foi Possível Salvar: '+(error.message||error.code))}
+    finally{button.disabled=false}
+  }
+});
+$('optionForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  if(role!=='admin'||!optionEdit.category)return;
+  const btn=$('optionSave');btn.disabled=true;
+  try{
+    await mutateOptions(optionEdit.category,optionEdit.id?'edit':'add',optionEdit.id||'',$('optionName').value);
+    modal('optionModal',false);toast('Configurações Salvas e Sincronizadas.');
+  }catch(error){console.error(error);toast('Não Foi Possível Salvar: '+(error.message||error.code))}
+  finally{btn.disabled=false}
+});
 
 function eventType(task){return task.priority==='Crítica'?'critical':task.priority==='Urgente'?'urgent':''}
 
@@ -188,6 +351,7 @@ function renderListsNew(){
 function renderAllNew(){renderListsNew();renderCalendarNew()}
 
 function openEditorNew(type,date){
+  renderFormOptions();
   $('taskForm').reset();
   $('type').querySelectorAll('option').forEach(o=>o.disabled=role!=='admin'&&o.value!=='Ocorrência');
   $('type').value=type||'Ocorrência';$('dueDate').value=date||'';
@@ -258,6 +422,8 @@ $('taskForm').onsubmit = async function(event){
   if(time&&!date){toast('Informe a Data Antes do Horário.');return}
   if($('type').value==='Evento'&&!date){toast('Informe A Data Do Evento.');return}
   const data={title:capWords($('title').value),type:$('type').value,priority:$('priority').value,sector:$('sector').value,assignee:$('assignee').value,dueAt:date?(time?date+'T'+time:date):'',details:$('details').value.trim(),status:'aberta',createdByUid:user.uid,createdByEmail:user.email,createdAt:serverTimestamp(),updatedAt:serverTimestamp()};
+  if(!settings.tipos.some(x=>x.ativo&&x.nome===data.type)||!settings.setores.some(x=>x.ativo&&x.nome===data.sector)){toast('Selecione Um Tipo e Setor Ativos nas Configurações.');return}
+  if(data.assignee&&!settings.responsaveis.some(x=>x.ativo&&x.nome===data.assignee)){toast('Selecione Um Responsável Ativo.');return}
   if(!data.title)return;
   if(role!=='admin'&&data.type!=='Ocorrência'){toast('Apenas Administradores Podem Criar Tarefas e Eventos.');return}
   $('saveTask').disabled=true;
@@ -338,11 +504,19 @@ if (!cfg?.apiKey || !cfg?.projectId) {
       unsubscribe();
       unsubscribe = null;
     }
-
+    if (unsubscribeSettings) {
+      unsubscribeSettings();
+      unsubscribeSettings = null;
+    }
     user = current;
     items = [];
 
     if (!current) {
+      role='operator';
+      settings=defaults();
+      settingsWarning='';
+      $('settingsNav').classList.add('auth-hidden');
+      renderFormOptions();
       $('app').classList.add('hidden');
       $('login').classList.remove('hidden');
       return;
@@ -357,6 +531,24 @@ if (!cfg?.apiKey || !cfg?.projectId) {
       }
 
       role = userSnap.data().role || 'operator';
+      $('settingsNav').classList.toggle('auth-hidden',role!=='admin');
+      if(role!=='admin'&&document.querySelector('.section.active')?.id==='configuracoes'){
+        document.querySelector('[data-page="tarefas"]').click();
+      }
+      settings=defaults();
+      renderFormOptions();
+      renderSettings();
+      settingsWarning='';
+      unsubscribeSettings=onSnapshot(configDoc(),snapshot=>{
+        settings=readSettings(snapshot.exists()?snapshot.data():null);
+        settingsWarning='';
+        renderFormOptions();
+        renderSettings();
+      },error=>{
+        console.error('Configuração Firestore:',error);
+        settingsWarning='As Opções Padrão Continuam Disponíveis. Para Editar e Sincronizar, Publique as Regras Atualizadas do Firestore.';
+        renderSettings();
+      });
       $('userLabel').textContent = current.email;
       $('roleLabel').textContent = role === 'admin' ? 'Administrador' : 'Operador';
       $('roleInfo').textContent = role === 'admin'
