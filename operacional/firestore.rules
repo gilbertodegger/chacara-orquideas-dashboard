@@ -14,6 +14,95 @@ service cloud.firestore {
       allow read: if request.auth != null && request.auth.uid == uid;
       allow write: if false;
     }
+    // Configurações sincronizadas: apenas o administrador pode alterar.
+    match /configuracoes/{configId} {
+      allow read: if configId == 'opcoes' && active();
+      allow create, update: if configId == 'opcoes' && admin()
+        && request.resource.data.keys().hasOnly(['setores','responsaveis','tipos','updatedByUid','updatedAt'])
+        && request.resource.data.keys().hasAll(['setores','responsaveis','tipos','updatedByUid','updatedAt'])
+        && request.resource.data.setores is list
+        && request.resource.data.responsaveis is list
+        && request.resource.data.tipos is list
+        && request.resource.data.setores.size() <= 60
+        && request.resource.data.responsaveis.size() <= 60
+        && request.resource.data.tipos.size() <= 60
+        && request.resource.data.updatedByUid == request.auth.uid
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
+    // Máquinas — somente administrador pode cadastrar, editar ou registrar troca de óleo.
+    match /maquinas/{machineId} {
+      allow read: if active();
+      allow create: if admin()
+        && request.resource.data.keys().hasOnly([
+          'marca','modelo','numeroSerie','anoModelo','seguro','observacoes','pecas',
+          'horimetroAtual','intervaloHoras','intervaloMeses','ultimaTrocaData','ultimaTrocaHoras',
+          'createdByUid','createdAt','updatedAt'
+        ])
+        && request.resource.data.keys().hasAll([
+          'marca','modelo','numeroSerie','anoModelo','seguro','observacoes','pecas',
+          'horimetroAtual','intervaloHoras','intervaloMeses','ultimaTrocaData','ultimaTrocaHoras',
+          'createdByUid','createdAt','updatedAt'
+        ])
+        && request.resource.data.createdByUid == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && validMachine();
+      allow update: if admin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'marca','modelo','numeroSerie','anoModelo','seguro','observacoes','pecas',
+          'horimetroAtual','intervaloHoras','intervaloMeses','ultimaTrocaData','ultimaTrocaHoras','updatedAt'
+        ])
+        && validMachine();
+      allow delete: if false;
+      function validMachine() {
+        return request.resource.data.marca is string
+          && request.resource.data.marca.size() > 0
+          && request.resource.data.marca.size() <= 80
+          && request.resource.data.modelo is string
+          && request.resource.data.modelo.size() > 0
+          && request.resource.data.modelo.size() <= 80
+          && request.resource.data.numeroSerie is string
+          && request.resource.data.numeroSerie.size() <= 100
+          && request.resource.data.anoModelo is string
+          && request.resource.data.anoModelo.size() <= 30
+          && request.resource.data.seguro in ['','Sim','Não']
+          && request.resource.data.observacoes is string
+          && request.resource.data.observacoes.size() <= 4000
+          && request.resource.data.pecas is list
+          && request.resource.data.pecas.size() <= 40
+          && (request.resource.data.horimetroAtual == null
+            || (request.resource.data.horimetroAtual is number && request.resource.data.horimetroAtual >= 0))
+          && (request.resource.data.intervaloHoras == null
+            || (request.resource.data.intervaloHoras is number && request.resource.data.intervaloHoras > 0))
+          && (request.resource.data.intervaloMeses == null
+            || (request.resource.data.intervaloMeses is number && request.resource.data.intervaloMeses > 0))
+          && request.resource.data.ultimaTrocaData is string
+          && request.resource.data.ultimaTrocaData.size() <= 10
+          && (request.resource.data.ultimaTrocaHoras == null
+            || (request.resource.data.ultimaTrocaHoras is number && request.resource.data.ultimaTrocaHoras >= 0))
+          && request.resource.data.updatedAt == request.time;
+      }
+      match /revisoes/{revisionId} {
+        allow read: if active();
+        allow create: if admin()
+          && request.resource.data.keys().hasOnly([
+            'tipo','data','horimetro','observacoes','createdAt','createdByUid'
+          ])
+          && request.resource.data.keys().hasAll([
+            'tipo','data','horimetro','observacoes','createdAt','createdByUid'
+          ])
+          && request.resource.data.tipo == 'Troca de Óleo'
+          && request.resource.data.data is string
+          && request.resource.data.data.size() == 10
+          && (request.resource.data.horimetro == null
+            || (request.resource.data.horimetro is number && request.resource.data.horimetro >= 0))
+          && request.resource.data.observacoes is string
+          && request.resource.data.observacoes.size() <= 1500
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.createdByUid == request.auth.uid;
+        allow update, delete: if false;
+      }
+    }
     match /tarefas/{taskId} {
       allow read: if active();
       allow create: if active()
@@ -24,7 +113,9 @@ service cloud.firestore {
         && request.resource.data.title.size() > 0
         && request.resource.data.title.size() <= 130
         && request.resource.data.priority in ['Baixa','Normal','Urgente','Crítica']
-        && request.resource.data.type in ['Ocorrência','Tarefa','Evento']
+        && request.resource.data.type is string
+        && request.resource.data.type.size() > 0
+        && request.resource.data.type.size() <= 80
         && (request.resource.data.type == 'Ocorrência' || admin())
         && request.resource.data.sector is string
         && request.resource.data.sector.size() <= 120
