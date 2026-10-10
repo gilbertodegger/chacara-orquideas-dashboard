@@ -1,6 +1,6 @@
 import {getApps,getApp,initializeApp} from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
 import {getAuth,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
-import {getFirestore,collection,doc,getDoc,setDoc,addDoc,updateDoc,onSnapshot,query,orderBy,writeBatch,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+import {getFirestore,collection,doc,getDoc,getDocs,setDoc,addDoc,updateDoc,onSnapshot,query,orderBy,limit,writeBatch,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
 const $=id=>document.getElementById(id);
 const safe=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -62,7 +62,7 @@ function renderList(){
 }
 function renderSettingsList(){
   const region=$("machineSettingsList");if(!region)return;
-  region.innerHTML=machines.length?machines.map(m=>'<div class="machine-settings-row"><div><strong>'+safe(machineName(m))+'</strong><small>'+safe(m.numeroSerie?"Série: "+m.numeroSerie:"Cadastro Pendente")+'</small></div><button class="btn secondary" data-machine-edit="'+safe(m.id)+'" type="button">Editar</button></div>').join(""):'<p class="muted">Nenhum Equipamento Cadastrado.</p>';
+  region.innerHTML=machines.length?machines.map(m=>'<div class="machine-settings-row"><div><strong>'+safe(machineName(m))+'</strong><small>'+safe(m.numeroSerie?"Série: "+m.numeroSerie:"Cadastro Pendente")+'</small></div><div class="machine-settings-actions"><button class="btn secondary" data-machine-edit="'+safe(m.id)+'" type="button">Editar</button><button class="machine-delete-icon" data-machine-delete="'+safe(m.id)+'" type="button" title="Excluir Equipamento" aria-label="Excluir '+safe(machineName(m))+'">×</button></div></div>').join(""):'<p class="muted">Nenhum Equipamento Cadastrado.</p>';
   const btn=$("seedMachines");btn.hidden=initials.every(entry=>machines.some(m=>m.id===entry.id));
 }
 function renderMachine(){
@@ -90,6 +90,7 @@ function renderMachine(){
   $("machineParts").innerHTML=Array.isArray(m.pecas)&&m.pecas.length?m.pecas.map(row=>'<tr><td>'+safe(row.codigo)+'</td><td>'+safe(row.descricao)+'</td></tr>').join(""):'<tr><td colspan="2">Nenhum Código de Peça Informado.</td></tr>';
   $("editSelectedMachine").hidden=!admin;
   $("logOilChange").hidden=!admin;
+  $("deleteSelectedMachine").hidden=!admin;
 }
 function showMachine(id){
   if(!machines.some(x=>x.id===id))return;
@@ -205,6 +206,51 @@ async function seedMachines(){
   }catch(err){console.error(err);message("Cadastro Não Concluído: "+(err.message||err.code)+". Verifique as Regras do Firestore.",true)}
   finally{button.disabled=false}
 }
+// Exclusão definitiva: apaga também as revisões desta máquina, em uma
+// única operação atômica, e grava um comprovante de auditoria.
+let deletingMachineId="";
+function openDeleteMachine(id){
+  if(!admin||!currentUser)return;
+  const m=machines.find(x=>x.id===id);if(!m)return;
+  deletingMachineId=id;
+  $("machineDeleteName").textContent=machineName(m);
+  $("machineDeleteRequired").textContent=m.modelo;
+  $("machineDeleteInput").value="";
+  $("deleteMachineConfirm").disabled=true;
+  modal("machineDeleteModal",true);
+}
+$("machineDeleteInput").addEventListener("input",()=>{
+  const target=machines.find(x=>x.id===deletingMachineId);
+  $("deleteMachineConfirm").disabled=!target||$("machineDeleteInput").value.trim()!==target.modelo;
+});
+async function confirmMachineDelete(){
+  if(!admin||!currentUser||!deletingMachineId||saving)return;
+  const m=machines.find(x=>x.id===deletingMachineId);
+  if(!m||$("machineDeleteInput").value.trim()!==m.modelo)return;
+  saving=true;$("deleteMachineConfirm").disabled=true;
+  try{
+    const id=m.id;
+    const snapshot=await getDocs(query(collection(db,COLLECTION,id,"revisoes"),limit(450)));
+    if(snapshot.size===450)throw Error("Este Equipamento Possui Muitas Revisões. Solicite Exclusão Assistida.");
+    const batch=writeBatch(db);
+    for(const rev of snapshot.docs)batch.delete(rev.ref);
+    batch.delete(doc(db,COLLECTION,id));
+    batch.set(doc(collection(db,"auditoriaEquipamentos")),{
+      machineId:id,marca:m.marca,modelo:m.modelo,numeroSerie:m.numeroSerie||"",
+      revisoesExcluidas:snapshot.size,actorUid:currentUser.uid,actorEmail:currentUser.email||"",
+      at:serverTimestamp()
+    });
+    await batch.commit();
+    if(chosenId===id){
+      if(stopHistory){stopHistory();stopHistory=null}
+      chosenId="";history=[];
+      $("machineDetail").hidden=true;
+    }
+    deletingMachineId="";modal("machineDeleteModal",false);
+    message(machineName(m)+" Excluído com Seu Histórico. A Exclusão Foi Registrada na Auditoria.");
+  }catch(err){console.error(err);message("Não Foi Possível Excluir: "+(err.code||err.message)+". Confira as Regras do Firestore.",true)}
+  finally{saving=false;$("deleteMachineConfirm").disabled=false}
+}
 function onLogin(user){
   if(stopMachines){stopMachines();stopMachines=null}
   if(stopHistory){stopHistory();stopHistory=null}
@@ -218,6 +264,7 @@ function onLogin(user){
     $("machineSettingsAdmin").hidden=!admin;
     $("editSelectedMachine").hidden=!admin;
     $("logOilChange").hidden=!admin;
+    $("deleteSelectedMachine").hidden=!admin;
     stopMachines=onSnapshot(collection(db,COLLECTION),snapshot=>{
       machines=snapshot.docs.map(x=>({id:x.id,...x.data()})).sort((a,b)=>machineName(a).localeCompare(machineName(b),"pt-BR"));
       liveReady=true;message(machines.length?"Equipamentos Sincronizados com o Firebase.":"Nenhum Equipamento Cadastrado. O Administrador Pode Adicionar os Cinco Equipamentos Iniciais.");
@@ -230,11 +277,18 @@ function onLogin(user){
 }
 $("machineSearch").addEventListener("input",renderList);
 $("machinesGrid").addEventListener("click",e=>{const t=e.target.closest("[data-machine-id]");if(t)showMachine(t.dataset.machineId)});
-$("machineSettingsList").addEventListener("click",e=>{const t=e.target.closest("[data-machine-edit]");if(t)openEditor(t.dataset.machineEdit)});
+$("machineSettingsList").addEventListener("click",e=>{
+  const del=e.target.closest("[data-machine-delete]");
+  if(del){openDeleteMachine(del.dataset.machineDelete);return}
+  const t=e.target.closest("[data-machine-edit]");
+  if(t)openEditor(t.dataset.machineEdit)
+});
 $("machineNew").onclick=()=>openEditor();
 $("machineGoSettings").onclick=()=>{if(admin)document.querySelector('[data-page="configuracoes"]')?.click()};
 $("editSelectedMachine").onclick=()=>openEditor(chosenId);
 $("logOilChange").onclick=editOil;
+$("deleteSelectedMachine").onclick=()=>openDeleteMachine(chosenId);
+$("deleteMachineConfirm").addEventListener("click",confirmMachineDelete);
 $("machineForm").addEventListener("submit",saveMachine);
 $("oilForm").addEventListener("submit",saveOil);
 $("seedMachines").onclick=seedMachines;
@@ -248,5 +302,5 @@ $("machinePartsEdit").addEventListener("click",e=>{
   parts.splice(Number(button.dataset.partRemove),1);partsRender()
 });
 document.querySelectorAll("[data-machine-close]").forEach(button=>button.addEventListener("click",()=>modal(button.dataset.machineClose,false)));
-["machineEditor","oilModal"].forEach(id=>$(id).addEventListener("click",e=>{if(e.target===$(id))modal(id,false)}));
+["machineEditor","oilModal","machineDeleteModal"].forEach(id=>$(id).addEventListener("click",e=>{if(e.target===$(id))modal(id,false)}));
 onAuthStateChanged(auth,onLogin);
