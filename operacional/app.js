@@ -288,7 +288,8 @@ function weeklyDateText(date){
   const [year,month,day]=date.split('-').map(Number);
   const weekday=weekDaysLong[new Date(year,month-1,day,12).getDay()];
   const prefix=weekday==='Domingo'||weekday==='Sábado'?'Todos os ':'Todas as ';
-  return 'Repete '+prefix+weekday+'s'+($('dueTime').value?' às '+$('dueTime').value:'')+'.';
+  const plural=weekday.endsWith('-feira')?weekday.replace('-feira','s-feiras'):weekday+'s';
+  return 'Repete '+prefix+plural+($('dueTime').value?' às '+$('dueTime').value:'')+'.';
 }
 function toggleEventRepetition(){
   const isEvent=$('type').value==='Evento';
