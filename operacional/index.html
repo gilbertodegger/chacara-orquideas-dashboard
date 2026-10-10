@@ -367,6 +367,19 @@ main{padding:18px 20px 26px}
 .parts-remove{height:32px;width:32px;border:1px solid #e1cbc8;border-radius:9px;background:#fff5f3;color:#a4443b;font-size:22px;line-height:1}
 @media(max-width:1060px){.machine-layout{grid-template-columns:1fr}.machine-detail-columns{grid-template-columns:1fr}.machine-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.machine-settings-list{grid-template-columns:1fr}.machine-detail-grid{grid-template-columns:1fr 1fr}.machine-heading h2{font-size:20px}}
+
+/* Evento recorrente: controles compactos no padrão do iPad. */
+.event-repeat-fields{gap:7px}
+.event-repeat-fields[hidden],.recurrence-detail[hidden]{display:none!important}
+.event-repeat-fields>select{height:44px;background:#fff}
+.recurrence-detail{display:flex;flex-direction:column;gap:8px;margin-top:5px;padding:12px;background:#f0f5ee;border:1px solid #dce7dc;border-radius:12px}
+.recurrence-detail .recurrence-explanation{font-size:13px;font-weight:700;color:#28543b}
+.recurrence-detail label{font-size:12px}
+.recurrence-detail input{background:#fff}
+.recurrence-detail small{font-size:11px;color:#667d6d;line-height:1.5}
+.calendar-event.recurring{border-left:2px solid #488269}
+.agenda-entry .repeat-indicator{font-weight:750;color:#346a4a}
+.chip.recurrence{background:#e5f0e9;color:#285a41}
 </style>
 </head>
 <body>
@@ -551,6 +564,19 @@ main{padding:18px 20px 26px}
 </div>
 <div class="field"><label for="dueDate">Prazo / Data do Evento</label><input id="dueDate" type="date"/></div>
 <div class="field"><label for="dueTime">Horário (Opcional)</label><input id="dueTime" type="time"/></div>
+<div class="field full event-repeat-fields" id="eventRepeatArea" hidden>
+  <label for="repeatFrequency">Repetir Evento</label>
+  <select id="repeatFrequency">
+    <option value="none">Não Repetir</option>
+    <option value="weekly">Toda Semana</option>
+  </select>
+  <div class="recurrence-detail" id="repeatWeeklyDetails" hidden>
+    <div class="recurrence-explanation" id="repeatSummary">Selecione a Data e o Horário do Primeiro Evento.</div>
+    <label for="repeatUntil">Repetir Até (Opcional)</label>
+    <input id="repeatUntil" type="date"/>
+    <small>Sem Data Final: O Evento Se Repete Semanalmente Até Ser Excluído pelo Administrador.</small>
+  </div>
+</div>
 <div class="field full">
 <label for="details">Detalhes Adicionais</label>
 <textarea id="details" maxlength="3000" placeholder="Descreva o Problema ou as Instruções da Atividade."></textarea>
