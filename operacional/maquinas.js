@@ -17,6 +17,7 @@ const firebaseApp=getApps().length?getApp():initializeApp(root);
 const auth=getAuth(firebaseApp), db=getFirestore(firebaseApp);
 let currentUser=null,admin=false,machines=[],chosenId="",stopMachines=null,stopHistory=null,history=[],formEditingId="",parts=[],saving=false,liveReady=false;
 const COLLECTION="maquinas";
+const machineTodayISO=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
 const dateLabel=s=>/^\d{4}-\d{2}-\d{2}$/.test(String(s||""))?String(s).split("-").reverse().join("/"):"Não Informada";
 const machineName=m=>[m.marca,m.modelo].filter(Boolean).join(" ");
 const countNum=v=>v===null||v===undefined||v===""?null:Number(v);
@@ -157,7 +158,7 @@ async function saveMachine(event){
 function editOil(){
   const m=machines.find(x=>x.id===chosenId);if(!m||!admin)return;
   $("oilForm").reset();
-  $("oilDate").value=new Date().toLocaleDateString("en-CA");
+  $("oilDate").value=machineTodayISO();
   $("oilHours").value=m.horimetroAtual??"";
   $("oilEquipmentName").textContent=machineName(m);
   modal("oilModal",true);
@@ -167,7 +168,7 @@ async function saveOil(event){
   const m=machines.find(x=>x.id===chosenId);if(!m)return;
   const date=$("oilDate").value,hour=cleanNum("oilHours");
   if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){message("Informe uma Data Válida.",true);return}
-  if(date>new Date().toLocaleDateString("en-CA")){message("A Data da Troca Não Pode Estar no Futuro.",true);return}
+  if(date>machineTodayISO()){message("A Data da Troca Não Pode Estar no Futuro.",true);return}
   if(m.ultimaTrocaData&&date<m.ultimaTrocaData){message("A Data É Anterior à Última Troca. Corrija a Data.",true);return}
   if(hour!=null&&m.ultimaTrocaHoras!=null&&hour<m.ultimaTrocaHoras){message("O Horímetro Não Pode Ser Inferior ao da Última Troca.",true);return}
   const review={tipo:"Troca de Óleo",data:date,horimetro:hour,observacoes:$("oilNotes").value.trim(),createdAt:serverTimestamp(),createdByUid:currentUser.uid};
@@ -213,7 +214,7 @@ function onLogin(user){
   getDoc(doc(db,"usuarios",user.uid)).then(profile=>{
     if(!profile.exists()||profile.data().ativo!==true)return;
     admin=profile.data().role==="admin";
-    $("machineAdminInfo").hidden=!admin;
+    $("machineGoSettings").hidden=!admin;
     $("machineSettingsAdmin").hidden=!admin;
     $("editSelectedMachine").hidden=!admin;
     $("logOilChange").hidden=!admin;
@@ -231,6 +232,7 @@ $("machineSearch").addEventListener("input",renderList);
 $("machinesGrid").addEventListener("click",e=>{const t=e.target.closest("[data-machine-id]");if(t)showMachine(t.dataset.machineId)});
 $("machineSettingsList").addEventListener("click",e=>{const t=e.target.closest("[data-machine-edit]");if(t)openEditor(t.dataset.machineEdit)});
 $("machineNew").onclick=()=>openEditor();
+$("machineGoSettings").onclick=()=>{if(admin)document.querySelector('[data-page="configuracoes"]')?.click()};
 $("editSelectedMachine").onclick=()=>openEditor(chosenId);
 $("logOilChange").onclick=editOil;
 $("machineForm").addEventListener("submit",saveMachine);
