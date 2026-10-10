@@ -460,6 +460,48 @@ main{padding:18px 20px 26px}
 .component-history-item .review-delete{grid-column:3;grid-row:1/3;align-self:center}
 .component-actions .review-delete{flex:0 0 auto}
 @media(max-width:700px){.component-manage-actions{width:100%}.component-manage-actions .btn{flex:1}}
+
+/* Gestão de Usuários: visual compacto com privilégios controlados no Firebase. */
+.users-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin:0 0 14px}
+.users-heading h2{margin:0 0 5px;font-size:23px}
+.users-heading p{margin:0}
+.users-header-buttons{display:flex;gap:8px}
+.users-header-buttons .btn{font-size:12px;padding:10px 12px}
+.users-message{font-size:12px;background:#e9efe7;color:#345d44;border-radius:10px;padding:11px 13px;margin-bottom:13px}
+.users-message.warning{background:#fff1e1;color:#8b4f1f}
+.users-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:13px}
+.users-stats>div{border:1px solid var(--border);background:#fff;padding:12px 14px;border-radius:12px;display:flex;flex-direction:column;gap:4px}
+.users-stats strong{font-size:23px;color:#204b34}
+.users-stats span{font-size:11px;color:#6f8373}
+.users-filter{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+.users-filter label{font-size:12px;font-weight:750;white-space:nowrap}
+.users-filter input{border:1px solid #d1ddce;border-radius:10px;max-width:340px;flex:1;min-width:0;padding:10px 12px}
+.users-table{border:1px solid var(--border);border-radius:13px;background:#fff;overflow:hidden}
+.users-row{display:grid;grid-template-columns:minmax(0,2fr) 110px 110px auto;gap:12px;align-items:center;padding:12px 15px;border-top:1px solid #e9eee8}
+.users-row:first-child{border-top:0}
+.users-person{display:flex;align-items:center;gap:10px;min-width:0}
+.users-avatar{display:grid;place-items:center;flex:0 0 39px;width:39px;height:39px;border:1px solid #e0e9db;border-radius:50%;background:#f0f5ef;color:#315e43;font-weight:850}
+.users-person-detail{min-width:0}
+.users-person-detail strong{display:block;font-size:13px;color:#183e2b;overflow-wrap:anywhere}
+.users-person-detail span{display:block;font-size:11px;color:#788879;overflow-wrap:anywhere;margin-top:3px}
+.users-role,.users-status{font-size:11px;font-weight:750;color:#4b6a52}
+.users-status.inactive{color:#a05b3d}
+.users-status.active{color:#287049}
+.users-actions{display:flex;gap:6px}
+.users-actions button{height:34px;padding:0 11px;border:1px solid #d5e0d5;border-radius:9px;background:#fff;color:#25543a;cursor:pointer;font-size:12px}
+.users-actions button:hover:not(:disabled){background:#eaf4eb}
+.users-actions button:disabled{opacity:.45;cursor:not-allowed}
+.users-empty{padding:18px;font-size:12px;color:#738775}
+.users-footer-note{font-size:11px;color:#768978;margin:12px 0}
+.users-dialog{width:min(640px,100%)}
+.users-dialog .fields{gap:11px}
+.users-dialog .field label{font-size:12px}
+.users-dialog .field input,.users-dialog .field select,.users-method select{width:100%;padding:10px;border:1px solid #d3ddd1;border-radius:9px;font:inherit;background:#fff}
+.users-dialog .field input[readonly]{background:#f3f5f1;color:#647567}
+.users-method{margin:12px 0}.users-method label{display:block;font-size:12px;font-weight:750;margin-bottom:7px}
+.users-form-help{font-size:11px;line-height:1.6;color:#627968;background:#f1f5ee;padding:10px;border-radius:9px;margin:11px 0}
+.users-dialog [hidden]{display:none!important}
+@media(max-width:760px){.users-heading h2{font-size:20px}.users-row{grid-template-columns:minmax(0,1fr) auto;gap:8px}.users-person{grid-column:1 / -1}.users-stats{gap:6px}.users-stats>div{padding:11px 9px}.users-actions{justify-self:end}.users-dialog .dialogfooter{flex-wrap:wrap}}
 </style>
 </head>
 <body>
@@ -493,6 +535,7 @@ main{padding:18px 20px 26px}
 <button data-page="maquinas" type="button">⚙ Revisão de Máquinas</button>
 <button data-page="ordenha" type="button">◷ Manutenção da Ordenha</button>
 <button class="auth-hidden" data-page="configuracoes" id="settingsNav" type="button">⚙ Configurações</button>
+<button class="auth-hidden" data-page="usuarios" id="usersNav" type="button">♙ Gestão de Usuários</button>
 </div>
 <div class="foot">
 <div id="userLabel">Conectando...</div>
@@ -641,6 +684,24 @@ main{padding:18px 20px 26px}
 <div class="machine-config-actions"><button class="btn secondary" id="seedMachines" type="button">Cadastrar os 5 Equipamentos Iniciais</button><button class="btn" id="machineNew" type="button">+ Novo Equipamento</button></div></div>
 <div id="machineSettingsList" class="machine-settings-list"></div>
 </div>
+</section>
+<section class="section" id="usuarios">
+<div class="users-heading">
+<div><h2>Gestão de Usuários</h2><p class="muted">Controle de Acesso da Chácara das Orquídeas. Somente Administradores Podem Alterar Permissões.</p></div>
+<div class="users-header-buttons"><button id="usersReload" class="btn secondary" type="button">↻ Atualizar</button><button id="usersAdd" class="btn" type="button">+ Novo Usuário</button></div>
+</div>
+<div id="usersMessage" class="users-message" role="status">Aguardando Autorização do Administrador.</div>
+<div class="users-stats">
+<div><strong id="usersTotal">—</strong><span>Usuários</span></div>
+<div><strong id="usersActive">—</strong><span>Ativos</span></div>
+<div><strong id="usersAdmins">—</strong><span>Administradores</span></div>
+</div>
+<div class="users-filter">
+<label for="usersSearch">Pesquisar Usuários</label>
+<input id="usersSearch" type="search" placeholder="Nome ou E-mail" autocomplete="off"/>
+</div>
+<div id="usersTable" class="users-table"><p class="muted">Os Usuários Serão Exibidos Após Carregar o Firebase.</p></div>
+<p class="users-footer-note">Desativar o Usuário Bloqueia o Acesso aos Dados no Firestore. O Login do Firebase Authentication Não É Excluído. Sua Própria Conta Administradora Não Pode Ser Desativada ou Rebaixada por Esta Guia.</p>
 </section>
 </main>
 </div>
@@ -801,6 +862,39 @@ main{padding:18px 20px 26px}
 <div id="detailContent"></div>
 <div class="dialogfooter"><button class="delete-button auth-hidden icon-action icon-delete" id="openDelete" type="button" title="Excluir Atividade" aria-label="Excluir Atividade"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg></button><button class="btn secondary" data-close="detail" type="button">Fechar</button></div>
 </div></div>
+<div class="modal" id="usersCreateModal">
+<div class="dialog users-dialog">
+<h2>Novo Usuário</h2>
+<p class="muted">Cadastre uma Conta Nova ou Vincule um UID Criado no Firebase Authentication.</p>
+<div class="users-method"><label for="usersMethod">Forma de Cadastro</label>
+<select id="usersMethod"><option value="new">Criar Login com E-mail e Senha</option><option value="existing">Vincular UID Existente</option></select></div>
+<form id="usersCreateForm" autocomplete="off">
+<div class="fields">
+<div class="field full"><label for="usersCreateName">Nome *</label><input id="usersCreateName" type="text" maxlength="80" required placeholder="Nome do Funcionário"/></div>
+<div class="field full"><label for="usersCreateEmail">E-mail *</label><input id="usersCreateEmail" type="email" maxlength="254" required autocomplete="off" placeholder="funcionario@exemplo.com"/></div>
+<div class="field" id="usersPassWrap"><label for="usersCreatePass">Senha Inicial *</label><input id="usersCreatePass" type="password" minlength="8" maxlength="128" autocomplete="new-password" placeholder="Mínimo de 8 Caracteres"/></div>
+<div class="field" id="usersUidWrap" hidden><label for="usersCreateUid">UID do Firebase Authentication *</label><input id="usersCreateUid" maxlength="128" type="text" autocomplete="off" placeholder="Copie o UID no Firebase"/></div>
+<div class="field"><label for="usersCreateRole">Permissão</label><select id="usersCreateRole"><option value="operator">Operador</option><option value="admin">Administrador</option></select></div>
+</div>
+<p class="users-form-help" id="usersCreateHelp">Para Criar um Login Diretamente, É Necessário Implantar a Função Administrativa no Firebase. Caso Ainda Não Esteja Implantada, Utilize Vincular UID Existente.</p>
+<div class="dialogfooter"><button id="usersCancelCreate" class="btn secondary" type="button">Cancelar</button><button id="usersSubmitCreate" class="btn" type="submit">Cadastrar Usuário</button></div>
+</form>
+</div></div>
+<div class="modal" id="usersEditModal">
+<div class="dialog users-dialog">
+<h2>Editar Usuário</h2>
+<form id="usersEditForm">
+<input id="usersEditUid" type="hidden" />
+<div class="fields">
+<div class="field full"><label for="usersEditName">Nome *</label><input id="usersEditName" type="text" maxlength="80" required/></div>
+<div class="field full"><label for="usersEditEmail">E-mail do Login</label><input id="usersEditEmail" type="email" readonly/></div>
+<div class="field"><label for="usersEditRole">Permissão</label><select id="usersEditRole"><option value="operator">Operador</option><option value="admin">Administrador</option></select></div>
+<div class="field"><label for="usersEditActive">Situação</label><select id="usersEditActive"><option value="true">Ativo</option><option value="false">Desativado</option></select></div>
+</div>
+<p class="users-form-help">Alterações de Nome, Permissão e Situação São Salvas no Firestore. O E-mail de Login Só Pode Ser Alterado no Firebase Authentication.</p>
+<div class="dialogfooter"><button id="usersResetPassword" class="btn secondary" type="button">Enviar Redefinição de Senha</button><button id="usersCancelEdit" class="btn secondary" type="button">Cancelar</button><button id="usersSubmitEdit" class="btn" type="submit">Salvar Alterações</button></div>
+</form>
+</div></div>
 <div class="modal" id="optionModal">
 <div class="dialog config-dialog"><h2 id="optionModalTitle">Nova Opção</h2>
 <form id="optionForm" autocomplete="off">
@@ -821,5 +915,6 @@ main{padding:18px 20px 26px}
 <script src="./maquinas.js" type="module"></script>
 <script src="./ordenha.js" type="module"></script>
 <script src="./componentes-ordenha.js" type="module"></script>
+<script src="./usuarios.js" type="module"></script>
 </body>
 </html>
