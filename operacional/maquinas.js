@@ -102,7 +102,47 @@ function showMachine(id){
   },err=>{console.error(err);$("machineHistory").textContent="Falha ao Carregar o Histórico. Confira as Regras do Firestore."});
 }
 function renderHistory(){
-  $("machineHistory").innerHTML=history.length?history.map(v=>'<div class="oil-history-item"><strong>'+safe(dateLabel(v.data))+' · '+safe(v.tipo)+'</strong><span>'+safe(v.horimetro==null?"Sem Horímetro":v.horimetro+" h")+'</span><p>'+safe(v.observacoes||"Sem Observações")+'</p></div>').join(""):'<div class="machine-empty">Nenhuma Revisão Registrada.</div>';
+  $("machineHistory").innerHTML=history.length?history.map(v=>'<div class="oil-history-item"><strong>'+safe(dateLabel(v.data))+' · '+safe(v.tipo)+'</strong><span>'+safe(v.horimetro==null?"Sem Horímetro":v.horimetro+" h")+'</span><p>'+safe(v.observacoes||"Sem Observações")+'</p>'+
+  (admin?'<button class="review-delete" type="button" data-delete-machine-review="'+safe(v.id)+'" title="Excluir Revisão" aria-label="Excluir Revisão de '+safe(dateLabel(v.data))+'">×</button>':'')+
+  '</div>').join(""):'<div class="machine-empty">Nenhuma Revisão Registrada.</div>';
+}
+function machineReviewSort(a,b){
+  return String(b.data||'').localeCompare(String(a.data||'')) ||
+    Number(b.horimetro??0)-Number(a.horimetro??0) ||
+    Number(b.createdAt?.seconds||0)-Number(a.createdAt?.seconds||0);
+}
+async function deleteMachineReview(id){
+  if(!admin||!currentUser||saving||!chosenId)return;
+  const old=history.find(v=>v.id===id),machine=machines.find(v=>v.id===chosenId);
+  if(!old||!machine)return;
+  if(!confirm('Excluir a Revisão de '+dateLabel(old.data)+' do '+machineName(machine)+'? Esta Operação Será Registrada na Auditoria.'))return;
+  saving=true;
+  try{
+    const snapshot=await getDocs(collection(db,COLLECTION,chosenId,'revisoes'));
+    if(!snapshot.docs.some(d=>d.id===id))throw Error('A Revisão Já Não Existe. Atualize a Lista.');
+    const remaining=snapshot.docs.filter(d=>d.id!==id).map(d=>d.data()).sort(machineReviewSort);
+    const currentAll=snapshot.docs.map(d=>({id:d.id,...d.data()})).sort(machineReviewSort);
+    const isLatest=currentAll[0]?.id===id;
+    const batch=writeBatch(db);
+    batch.delete(doc(db,COLLECTION,chosenId,'revisoes',id));
+    if(isLatest){
+      const previous=remaining[0];
+      batch.update(doc(db,COLLECTION,chosenId),{
+        ultimaTrocaData:previous?.data||'',
+        ultimaTrocaHoras:previous?.horimetro??null,
+        updatedAt:serverTimestamp()
+      });
+    }
+    batch.set(doc(collection(db,'auditoriaManutencao')),{
+      origem:'maquina',registroId:id,referenciaId:chosenId,
+      descricao:machineName(machine)+' — '+(old.tipo||'Revisão'),
+      data:old.data||'',actorUid:currentUser.uid,
+      actorEmail:currentUser.email||'',at:serverTimestamp()
+    });
+    await batch.commit();
+    message('Revisão Excluída. '+(isLatest?'A Última Troca Foi Recalculada. ':'')+'O Horímetro Atual da Máquina Foi Preservado.');
+  }catch(error){console.error(error);message('Falha ao Excluir Revisão: '+(error.code||error.message),true)}
+  finally{saving=false}
 }
 const modal=(id,open)=>$(id).classList.toggle("show",open);
 const blankPart=()=>({codigo:"",descricao:""});
@@ -275,6 +315,10 @@ function onLogin(user){
     },err=>{console.error(err);message("Falha ao Ler Máquinas. Atualize as Regras do Firestore e Tente Novamente.",true)});
   }).catch(error=>{console.error(error);message("Falha de Permissão. Verifique o Perfil do Usuário.",true)});
 }
+$("machineHistory").addEventListener("click",event=>{
+  const btn=event.target.closest('[data-delete-machine-review]');
+  if(btn)deleteMachineReview(btn.dataset.deleteMachineReview);
+});
 $("machineSearch").addEventListener("input",renderList);
 $("machinesGrid").addEventListener("click",e=>{const t=e.target.closest("[data-machine-id]");if(t)showMachine(t.dataset.machineId)});
 $("machineSettingsList").addEventListener("click",e=>{
