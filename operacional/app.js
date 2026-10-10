@@ -64,7 +64,8 @@ const sectionLabel = {
   historico: 'Histórico de Atividades',
   maquinas: 'Revisão de Máquinas',
   ordenha: 'Manutenção da Ordenha',
-  configuracoes: 'Configurações'
+  configuracoes: 'Configurações',
+  usuarios: 'Gestão de Usuários'
 };
 
 const modal = (id, open) => $(id).classList.toggle('show', open);
@@ -83,6 +84,7 @@ document.querySelectorAll('.modal').forEach((m) => {
 
 document.querySelectorAll('[data-page]').forEach((button) => {
   button.onclick = () => {
+    if(['configuracoes','usuarios'].includes(button.dataset.page)&&role!=='admin')return;
     document.querySelectorAll('[data-page]').forEach((x) => x.classList.toggle('active', x === button));
     document.querySelectorAll('.section').forEach((x) => x.classList.toggle('active', x.id === button.dataset.page));
     $('sectionName').textContent = sectionLabel[button.dataset.page] || 'Gestão Operacional';
@@ -579,6 +581,7 @@ if (!cfg?.apiKey || !cfg?.projectId) {
       settings=defaults();
       settingsWarning='';
       $('settingsNav').classList.add('auth-hidden');
+      $('usersNav').classList.add('auth-hidden');
       renderFormOptions();
       $('app').classList.add('hidden');
       $('login').classList.remove('hidden');
@@ -595,7 +598,8 @@ if (!cfg?.apiKey || !cfg?.projectId) {
 
       role = userSnap.data().role || 'operator';
       $('settingsNav').classList.toggle('auth-hidden',role!=='admin');
-      if(role!=='admin'&&document.querySelector('.section.active')?.id==='configuracoes'){
+      $('usersNav').classList.toggle('auth-hidden',role!=='admin');
+      if(role!=='admin'&&['configuracoes','usuarios'].includes(document.querySelector('.section.active')?.id)){
         document.querySelector('[data-page="tarefas"]').click();
       }
       settings=defaults();
