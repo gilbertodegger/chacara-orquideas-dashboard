@@ -132,7 +132,10 @@ async function saveChange(e){
  if(!def.materials.includes(material)||observacoes.length>1200)return notify("Material ou Observações Inválidas.",true);
  const spec=specs(id,material),batch=writeBatch(db);
  batch.set(docRef(id),{title:c.title||def.title,material,dataTroca:date,limiteOrdenhas:spec?spec.ciclos:c.limiteOrdenhas??null,limiteMeses:spec?spec.meses:c.limiteMeses??null,observacoes:c.observacoes||"",ativo:true,updatedByUid:user.uid,updatedAt:serverTimestamp()});
- batch.set(doc(logs(id)),{data:date,material,observacoes,createdAt:serverTimestamp(),createdByUid:user.uid});
+ batch.set(doc(logs(id)),{data:date,material,observacoes,
+  anteriorDataTroca:c.dataTroca||'',anteriorMaterial:c.material,
+  anteriorLimiteOrdenhas:c.limiteOrdenhas??null,anteriorLimiteMeses:c.limiteMeses??null,
+  createdAt:serverTimestamp(),createdByUid:user.uid});
  saving=true;$("componentChangeSave").disabled=true;
  try{await batch.commit();modal("componentChangeModal",false);notify("Troca Registrada no Histórico de "+def.title+".")}
  catch(ex){console.error(ex);notify("Não Foi Possível Registrar: "+(ex.code||ex.message),true)}
@@ -160,9 +163,11 @@ async function deleteComponentReview(reviewId){
   const newest=entries[0]?.id===reviewId,older=entries.filter(x=>x.id!==reviewId).sort(byRecency)[0];
   const batch=writeBatch(db);batch.delete(doc(logs(selected),reviewId));
   if(newest){
-    const c=get(selected),mat=older?.material||c.material,preset=specs(selected,mat);
-    batch.set(docRef(selected),{title:c.title||find(selected).title,material:mat,dataTroca:older?.data||'',
-      limiteOrdenhas:preset?.ciclos??c.limiteOrdenhas??null,limiteMeses:preset?.meses??c.limiteMeses??null,
+    const c=get(selected),mat=older?.material||item.anteriorMaterial||c.material,preset=specs(selected,mat);
+    batch.set(docRef(selected),{title:c.title||find(selected).title,material:mat,
+      dataTroca:older?.data||item.anteriorDataTroca||'',
+      limiteOrdenhas:preset?.ciclos??(older?.anteriorLimiteOrdenhas??item.anteriorLimiteOrdenhas??c.limiteOrdenhas??null),
+      limiteMeses:preset?.meses??(older?.anteriorLimiteMeses??item.anteriorLimiteMeses??c.limiteMeses??null),
       observacoes:c.observacoes||'',ativo:c.ativo!==false,updatedByUid:user.uid,updatedAt:serverTimestamp()});
   }
   batch.set(doc(collection(db,'auditoriaManutencao')),{origem:'componente',registroId:reviewId,referenciaId:selected,
