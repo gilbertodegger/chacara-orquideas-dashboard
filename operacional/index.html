@@ -415,6 +415,34 @@ main{padding:18px 20px 26px}
 @media(max-width:1100px){.milk-shell{grid-template-columns:1fr}}
 @media(max-width:700px){.milk-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.milk-panel{padding:12px}.milk-results{grid-template-columns:1fr 1fr}}
 .milk-limit-reason{display:block;color:#6e8370;font-size:10px;margin-top:4px}.milk-panel input[readonly]{background:#f0f4ee;color:#234a33;font-weight:800;cursor:default}.milk-panel .field small{font-size:11px;color:#637d69}
+
+/* Kits da Ordenha: histórico e troca individuais, rotina compartilhada. */
+.component-block{margin:16px 0 0;padding-top:16px;border-top:1px solid #d7e4d6}
+.component-block .machine-heading h3{font-size:18px;margin:0 0 5px}
+.component-routine{border:1px solid #d8e5d9;border-radius:10px;padding:10px 12px;background:#f7faf6;color:#45624c;font-size:12px;margin:0 0 12px}
+.component-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.component-card{background:#fff;border:1px solid var(--border);border-radius:13px;padding:13px;min-width:0}
+.component-card-header{display:flex;align-items:start;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.component-card-header h4{font-size:15px;margin:0;line-height:1.4}
+.component-sub{font-size:11px;color:#687e6d;line-height:1.5;margin:9px 0}
+.component-sub strong{color:#284b37}
+.component-kpis{display:grid;gap:6px}
+.component-kpis>div{display:flex;flex-direction:column;gap:4px;padding:8px 10px;background:#f3f7f2;border-radius:9px;min-width:0}
+.component-kpis span{color:#6b7d6e;font-size:10px}
+.component-kpis strong{color:#254735;font-size:14px;overflow-wrap:anywhere}
+.component-kpis small{color:#78907b;font-size:10px}
+.component-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px}
+.component-actions .btn{padding:8px 10px;font-size:11px;flex:1;min-width:0}
+.component-actions .btn:disabled{opacity:.45}
+.component-note{font-size:10px;line-height:1.65;color:#657b6c;margin:10px 0 0}
+.component-history-panel{padding:13px;background:#fff;border:1px solid #d9e6d9;border-radius:12px;margin-top:12px}
+.component-history-panel h4{font-size:14px;margin:0}
+.component-history-item{display:grid;grid-template-columns:1fr auto;gap:3px 10px;border-top:1px solid #e9eee6;padding:10px 0;font-size:12px}
+.component-history-item strong{color:#244c36}
+.component-history-item span{color:#4d6b56}
+.component-history-item p{margin:2px 0 0;grid-column:1/-1;white-space:pre-wrap;color:#728575}
+@media(max-width:1200px){.component-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.component-cards{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -568,6 +596,19 @@ main{padding:18px 20px 26px}
 <div id="milkHistoryList" class="milk-history"></div>
 </section>
 </div>
+
+<div class="component-block">
+<div class="machine-heading"><div><h3>Trocas por Componente</h3>
+<p class="muted">Cada Componente Tem Sua Própria Data, Material, Histórico e Previsão. A Rotina Acima É Compartilhada.</p></div></div>
+<div id="componentMessage" class="machine-hint" role="status">Carregando Componentes...</div>
+<div id="componentRoutine" class="component-routine">Carregando Rotina da Ordenha...</div>
+<div class="component-cards" id="componentCards"></div>
+<section id="componentHistoryPanel" class="component-history-panel" hidden>
+<div class="machine-heading"><h4 id="componentHistoryTitle">Histórico de Trocas</h4><button type="button" id="componentHistoryClose" class="btn secondary">Fechar</button></div>
+<div id="componentHistoryList"></div>
+</section>
+<p class="milk-caveat">Cálculo de Ordenhas por Conjunto = Número de Vacas × 3 Ordenhas por Dia ÷ Conjuntos. O Uso Anterior É Estimado com Base na Rotina Atual e na Data da Última Troca, Não em Contadores Individuais de Cada Conjunto. Considere o Primeiro Limite Atingido: Ordenhas ou Meses. Alterações da Rotina Não Reconstituem Valores Históricos.</p>
+</div>
 </section>
 <section class="section" id="configuracoes">
 <div class="config-intro"><h2>Configurações</h2><p class="muted">Gerencie as Opções dos Formulários. As Mudanças Aparecem Automaticamente em Todos os Dispositivos.</p></div>
@@ -622,6 +663,32 @@ main{padding:18px 20px 26px}
 <div class="field full"><label for="milkChangeNote">Observações</label><textarea id="milkChangeNote" maxlength="1500" placeholder="Lote, Modelo das Teteiras e Detalhes da Troca"></textarea></div>
 </div><p class="milk-caveat">Trocas Parciais Exigem Registro Individual por Conjunto e Não Serão Aceitas Neste Controle.</p>
 <div class="dialogfooter"><button class="btn secondary" id="milkCancelChange" type="button">Cancelar</button><button class="btn" id="milkChangeSubmit" type="submit">Registrar Troca</button></div>
+</form></div></div>
+
+<div class="modal" id="componentEditModal"><div class="dialog">
+<h2 id="componentEditTitle">Configurar Componente</h2>
+<form id="componentEditForm">
+<div class="fields">
+<div class="field"><label for="componentMaterial">Material *</label><select id="componentMaterial" required></select></div>
+<div class="field"><label for="componentInstalled">Data da Última Troca</label><input id="componentInstalled" type="date"/></div>
+<div class="field"><label for="componentLimitCycles">Limite de Ordenhas por Conjunto</label><input id="componentLimitCycles" type="number" min="1" step="1" placeholder="Conforme o Fabricante"/></div>
+<div class="field"><label for="componentLimitMonths">Limite de Tempo (Meses)</label><input id="componentLimitMonths" type="number" min="1" step="1" placeholder="Conforme o Fabricante"/></div>
+<div class="field full"><label for="componentNotes">Notas e Códigos de Peças</label><textarea id="componentNotes" maxlength="1200" placeholder="Modelo, Código da Peça e Observações"></textarea></div>
+</div>
+<p class="milk-explainer" id="componentEditHint"></p>
+<div class="dialogfooter"><button class="btn secondary" type="button" data-component-close="componentEditModal">Cancelar</button>
+<button class="btn" type="submit" id="componentSave">Salvar Componente</button></div>
+</form></div></div>
+<div class="modal" id="componentChangeModal"><div class="dialog">
+<h2 id="componentChangeTitle">Registrar Troca</h2>
+<p id="componentChangeHint" class="muted"></p>
+<form id="componentChangeForm"><div class="fields">
+<div class="field"><label for="componentChangeDate">Data da Troca *</label><input id="componentChangeDate" type="date" required/></div>
+<div class="field"><label for="componentChangeMaterial">Material Instalado</label><select id="componentChangeMaterial" required></select></div>
+<div class="field full"><label for="componentChangeNotes">Descrição da Troca</label><textarea id="componentChangeNotes" maxlength="1200" placeholder="Serviço Realizado e Códigos das Peças"></textarea></div>
+</div><p class="milk-caveat">A Contagem É Reiniciada para o Componente Completo. Trocas Parciais Devem Ser Controladas Separadamente.</p>
+<div class="dialogfooter"><button class="btn secondary" type="button" data-component-close="componentChangeModal">Cancelar</button>
+<button class="btn" type="submit" id="componentChangeSave">Registrar Troca</button></div>
 </form></div></div>
 <div class="modal" id="editor">
 <div class="dialog">
@@ -731,5 +798,6 @@ main{padding:18px 20px 26px}
 <script src="./app.js" type="module"></script>
 <script src="./maquinas.js" type="module"></script>
 <script src="./ordenha.js" type="module"></script>
+<script src="./componentes-ordenha.js" type="module"></script>
 </body>
 </html>
