@@ -62,6 +62,7 @@ const sectionLabel = {
   tarefas: 'Tarefas e Ocorrências',
   agenda: 'Agenda de Eventos',
   historico: 'Histórico de Atividades',
+  maquinas: 'Revisão de Máquinas',
   configuracoes: 'Configurações'
 };
 
@@ -227,7 +228,7 @@ function openOptionEditor(category,id=null){
 async function mutateOptions(category,action,id='',value=''){
   if(role!=='admin'||!user)throw new Error('Somente o Administrador Pode Alterar Configurações.');
   if(!SETTING_GROUPS.some(group=>group.key===category))throw new Error('Categoria Inválida.');
-  const fresh=capWords(String(value||'').replace(/\s+/g,' ').trim());
+  const fresh=String(value||'').replace(/\s+/g,' ').trim();
   if(['add','edit'].includes(action)&&(fresh.length<2||fresh.length>80))throw new Error('O Nome Deve Ter de 2 a 80 Caracteres.');
   await runTransaction(db,async transaction=>{
     const snapshot=await transaction.get(configDoc());
@@ -292,7 +293,7 @@ function summaryCard(task){
    <span class="chip ${badge}">${esc(task.priority)}</span>
    <span class="chip ${done?'concluida':''}">${esc(stateLabel[task.status]||task.status)}</span>
    <span class="chip">${esc(task.type)}</span></div>
-   <div class="muted">${esc(capWords(task.sector))} · Responsável: ${esc(capWords(task.assignee||'Não Definido'))} · ${esc(ptDate(task.dueAt))}</div>
+   <div class="muted">${esc(task.sector)} · Responsável: ${esc(task.assignee||'Não Definido')} · ${esc(ptDate(task.dueAt))}</div>
    ${task.details?`<p class="muted">${esc(task.details)}</p>`:''}</div>
    <div class="actions">
    <button class="btn secondary icon-action icon-search" type="button" data-detail="${esc(task.id)}" title="Detalhes" aria-label="Detalhes">${UI_ICONS.search}</button>
@@ -324,7 +325,7 @@ function renderCalendarNew(){
   const dailyEvents=(daily[selectedDay]||[]).sort((a,b)=>String(a.dueAt).localeCompare(String(b.dueAt)));
   $('selectedDateCount').textContent=dailyEvents.length+' '+(dailyEvents.length===1?'Atividade Programada':'Atividades Programadas');
   $('addCalendarEvent').classList.toggle('auth-hidden',role!=='admin');
-  $('agendaList').innerHTML=dailyEvents.length?dailyEvents.map(t=>`<button type="button" class="agenda-entry ${eventType(t)}" data-detail="${esc(t.id)}"><span class="mini">${esc((t.dueAt||'').match(/T(\d{2}:\d{2})/)?.[1]||'Dia Inteiro')} · ${esc(t.type)} · ${esc(t.priority)}</span><b>${esc(capWords(t.title))}</b><span class="mini">${esc(capWords(t.sector))} · ${esc(stateLabel[t.status])}</span></button>`).join(''):'<div class="agenda-empty">Nenhuma Atividade para Este Dia.</div>';
+  $('agendaList').innerHTML=dailyEvents.length?dailyEvents.map(t=>`<button type="button" class="agenda-entry ${eventType(t)}" data-detail="${esc(t.id)}"><span class="mini">${esc((t.dueAt||'').match(/T(\d{2}:\d{2})/)?.[1]||'Dia Inteiro')} · ${esc(t.type)} · ${esc(t.priority)}</span><b>${esc(capWords(t.title))}</b><span class="mini">${esc(t.sector)} · ${esc(stateLabel[t.status])}</span></button>`).join(''):'<div class="agenda-empty">Nenhuma Atividade para Este Dia.</div>';
 }
 
 function renderListsNew(){
@@ -363,7 +364,7 @@ function showDetailNew(id){
   const t=items.find(x=>x.id===id);if(!t)return;
   viewId=id;
   $('detailTitle').textContent=capWords(t.title);
-  const values=[['Tipo',t.type],['Status',stateLabel[t.status]||t.status],['Prioridade',t.priority],['Setor',capWords(t.sector)],['Responsável',capWords(t.assignee||'Não Definido')],['Data e Horário',ptDate(t.dueAt)]];
+  const values=[['Tipo',t.type],['Status',stateLabel[t.status]||t.status],['Prioridade',t.priority],['Setor',t.sector],['Responsável',t.assignee||'Não Definido'],['Data e Horário',ptDate(t.dueAt)]];
   $('detailContent').innerHTML='<div class="detail-grid">'+values.map(([a,b])=>'<div><strong>'+esc(a)+'</strong><span>'+esc(b)+'</span></div>').join('')+'</div><strong>Detalhes</strong><div class="detail-note">'+esc(t.details||'Sem Detalhes Adicionais.')+'</div>';
   $('openDelete').classList.toggle('auth-hidden',role!=='admin');modal('detail',true)
 }
