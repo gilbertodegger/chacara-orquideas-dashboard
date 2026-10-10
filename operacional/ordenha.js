@@ -127,7 +127,7 @@ async function deleteMilkReview(id){
     const isLatest=ordered[0].id===id,previous=ordered.find(x=>x.id!==id);
     const batch=writeBatch(db);
     batch.delete(doc(db,'manutencaoOrdenha','teteiras','trocas',id));
-    if(isLatest)batch.update(ref,{dataTroca:previous?.data||'',updatedByUid:operator.uid,updatedAt:serverTimestamp()});
+    if(isLatest)batch.update(ref,{dataTroca:previous?.data||selected.anteriorDataTroca||'',updatedByUid:operator.uid,updatedAt:serverTimestamp()});
     batch.set(doc(collection(db,'auditoriaManutencao')),{origem:'ordenha',registroId:id,referenciaId:'teteiras',
       descricao:'Troca de Teteiras — '+(selected.conjuntos||12)+' Conjuntos',data:selected.data||'',
       actorUid:operator.uid,actorEmail:operator.email||'',at:serverTimestamp()});
@@ -166,7 +166,7 @@ async function replace(e){
   try{
     const batch=writeBatch(db);
     batch.set(doc(collection(db,"manutencaoOrdenha","teteiras","trocas")),
-      {data,conjuntos,observacoes,createdAt:serverTimestamp(),createdByUid:operator.uid});
+      {data,conjuntos,observacoes,anteriorDataTroca:model.dataTroca||'',createdAt:serverTimestamp(),createdByUid:operator.uid});
     batch.update(ref,{dataTroca:data,updatedByUid:operator.uid,updatedAt:serverTimestamp()});
     await batch.commit();$("milkReplaceModal").classList.remove("show");
     alertMsg("Troca de Teteiras Registrada no Histórico.");
