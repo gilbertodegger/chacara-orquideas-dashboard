@@ -54,9 +54,9 @@ const stateLabel = {
 };
 
 const sectionLabel = {
-  tarefas: 'Tarefas E Ocorrências',
+  tarefas: 'Tarefas e Ocorrências',
   agenda: 'Agenda De Eventos',
-  historico: 'Histórico De Atividades'
+  historico: 'Histórico de Atividades'
 };
 
 const modal = (id, open) => $(id).classList.toggle('show', open);
@@ -77,7 +77,7 @@ document.querySelectorAll('[data-page]').forEach((button) => {
   button.onclick = () => {
     document.querySelectorAll('[data-page]').forEach((x) => x.classList.toggle('active', x === button));
     document.querySelectorAll('.section').forEach((x) => x.classList.toggle('active', x.id === button.dataset.page));
-    $('sectionName').textContent = sectionLabel[button.dataset.page] || 'Gestão operacional';
+    $('sectionName').textContent = sectionLabel[button.dataset.page] || 'Gestão Operacional';
     render();
   };
 });
@@ -85,7 +85,7 @@ document.querySelectorAll('[data-page]').forEach((button) => {
 $('search').oninput = render;
 $('filter').onchange = render;
 $('logout').onclick = async () => { if (auth) await signOut(auth); };
-$('refresh').onclick = () => { render(); toast('Dados atualizados.'); };
+$('refresh').onclick = () => { render(); toast('Dados Atualizados.'); };
 
 let monthCursor=new Date(new Date().getFullYear(),new Date().getMonth(),1);
 
@@ -103,10 +103,25 @@ function ptDate(raw){
   return `${d}/${m}/${y}`+(clock?` Às ${clock[1]}`:"");
 }
 
-function capWords(text){return String(text||'').trim().replace(/(^|[\s\/-])(\p{L})/gu,(_,p,l)=>p+l.toLocaleUpperCase('pt-BR'))}
+const smallPt = new Set(['a','o','as','os','um','uma','uns','umas','e','ou','de','do','da','dos','das','em','no','na','nos','nas','por','para','com','sem','até','entre','ao','aos','à','às','pelo','pela','pelos','pelas','que','se']);
+const brandsPt = {firebase:'Firebase',firestore:'Firestore',github:'GitHub',google:'Google',authentication:'Authentication',html:'HTML',css:'CSS',csv:'CSV',pdf:'PDF',id:'ID',uid:'UID',ip:'IP',gea:'GEA',thi:'THI',nedap:'Nedap',iatf:'IATF'};
+function capWords(text){
+  let n=0;
+  return String(text??'').trim().replace(/\p{L}+(?:[-’']\p{L}+)*/gu,(word)=>{
+    const low=word.toLocaleLowerCase('pt-BR');
+    const out=n>0&&smallPt.has(low)?low:(brandsPt[low]||low[0].toLocaleUpperCase('pt-BR')+low.slice(1));
+    n++;
+    return out;
+  });
+}
 
 function eventType(task){return task.priority==='Crítica'?'critical':task.priority==='Urgente'?'urgent':''}
 
+const UI_ICONS={
+  search:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.3 4.3"/></svg>',
+  check:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7"/></svg>',
+  delete:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18"/></svg>'
+};
 function summaryCard(task){
   const badge=task.priority==="Crítica"?"critica":task.priority==="Urgente"?"urgente":"";
   const done=task.status==="concluida";
@@ -117,18 +132,18 @@ function summaryCard(task){
    <div class="muted">${esc(task.sector)} · Responsável: ${esc(task.assignee||'Não Definido')} · ${esc(ptDate(task.dueAt))}</div>
    ${task.details?`<p class="muted">${esc(task.details)}</p>`:''}</div>
    <div class="actions">
-   <button class="btn secondary small-btn" data-detail="${esc(task.id)}">Detalhes</button>
+   <button class="btn secondary icon-action icon-search" type="button" data-detail="${esc(task.id)}" title="Detalhes" aria-label="Detalhes">${UI_ICONS.search}</button>
    ${task.status==="aberta"?`<button class="btn secondary" data-status="andamento" data-id="${esc(task.id)}">Iniciar</button>`:""}
-   ${!done?`<button class="btn" data-status="concluida" data-id="${esc(task.id)}">Concluir</button>`:""}
-   ${role==="admin"?`<button class="delete-button" data-delete="${esc(task.id)}">Excluir</button>`:""}
+   ${!done?`<button class="btn icon-action icon-check" type="button" data-status="concluida" data-id="${esc(task.id)}" title="Concluir" aria-label="Concluir">${UI_ICONS.check}</button>`:""}
+   ${role==="admin"?`<button class="delete-button icon-action icon-delete" type="button" data-delete="${esc(task.id)}" title="Excluir" aria-label="Excluir">${UI_ICONS.delete}</button>`:""}
    </div></article>`;
 }
 
 function renderCalendarNew(){
   const monthNames=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-  const weekNames=['Domingo','Segunda-Feira','Terça-Feira','Quarta-Feira','Quinta-Feira','Sexta-Feira','Sábado'];
+  const weekNames=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
   const y=monthCursor.getFullYear(),m=monthCursor.getMonth();
-  $('calendarMonth').textContent=monthNames[m]+' De '+y;
+  $('calendarMonth').textContent=monthNames[m]+' de '+y;
   const start=(new Date(y,m,1).getDay()+6)%7;
   const count=Math.ceil((start+new Date(y,m+1,0).getDate())/7)*7;
   const daily={};for(const t of items){const d=dateKey(t.dueAt);if(/^\d{4}-\d{2}-\d{2}$/.test(d))(daily[d]||=[]).push(t)}
@@ -142,11 +157,11 @@ function renderCalendarNew(){
   }
   $('calendarGrid').innerHTML=cells.join('');
   const [yy,mm,dd]=selectedDay.split('-').map(Number);const date=new Date(yy,mm-1,dd);
-  $('selectedDateTitle').textContent=weekNames[date.getDay()]+', '+dd+' De '+monthNames[date.getMonth()]+' De '+yy;
+  $('selectedDateTitle').textContent=weekNames[date.getDay()]+', '+dd+' de '+monthNames[date.getMonth()]+' de '+yy;
   const dailyEvents=(daily[selectedDay]||[]).sort((a,b)=>String(a.dueAt).localeCompare(String(b.dueAt)));
   $('selectedDateCount').textContent=dailyEvents.length+' '+(dailyEvents.length===1?'Atividade Programada':'Atividades Programadas');
   $('addCalendarEvent').classList.toggle('auth-hidden',role!=='admin');
-  $('agendaList').innerHTML=dailyEvents.length?dailyEvents.map(t=>`<button type="button" class="agenda-entry ${eventType(t)}" data-detail="${esc(t.id)}"><span class="mini">${esc((t.dueAt||'').match(/T(\d{2}:\d{2})/)?.[1]||'Dia Inteiro')} · ${esc(t.type)} · ${esc(t.priority)}</span><b>${esc(capWords(t.title))}</b><span class="mini">${esc(t.sector)} · ${esc(stateLabel[t.status])}</span></button>`).join(''):'<div class="agenda-empty">Nenhuma Atividade Para Este Dia.</div>';
+  $('agendaList').innerHTML=dailyEvents.length?dailyEvents.map(t=>`<button type="button" class="agenda-entry ${eventType(t)}" data-detail="${esc(t.id)}"><span class="mini">${esc((t.dueAt||'').match(/T(\d{2}:\d{2})/)?.[1]||'Dia Inteiro')} · ${esc(t.type)} · ${esc(t.priority)}</span><b>${esc(capWords(t.title))}</b><span class="mini">${esc(capWords(t.sector))} · ${esc(stateLabel[t.status])}</span></button>`).join(''):'<div class="agenda-empty">Nenhuma Atividade Para Este Dia.</div>';
 }
 
 function renderListsNew(){
@@ -156,7 +171,7 @@ function renderListsNew(){
   $('statUrgent').textContent=active.filter(t=>['Crítica','Urgente'].includes(t.priority)).length;
   $('statDone').textContent=items.filter(t=>t.status==='concluida').length;
   const filter=$('filter').value;
-  const names={ativas:'Pendentes E Em Andamento',todas:'Todas As Atividades',aberta:'Em Aberto',andamento:'Em Andamento',urgentes:'Críticas / Urgentes',concluida:'Concluídas'};
+  const names={ativas:'Pendentes e Em Andamento',todas:'Todas As Atividades',aberta:'Em Aberto',andamento:'Em Andamento',urgentes:'Críticas / Urgentes',concluida:'Concluídas'};
   document.querySelectorAll('[data-kpi]').forEach(b=>{const selected=b.dataset.kpi===filter;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected))});
   $('filterSummary').innerHTML='Exibindo: '+esc(names[filter]||names.todas)+' <button type="button" class="link-btn" id="resetFilters">Limpar Filtro</button>';
   $('resetFilters').onclick=()=>{$('filter').value='ativas';$('search').value='';renderListsNew()};
@@ -184,13 +199,13 @@ function showDetailNew(id){
   const t=items.find(x=>x.id===id);if(!t)return;
   viewId=id;
   $('detailTitle').textContent=capWords(t.title);
-  const values=[['Tipo',t.type],['Status',stateLabel[t.status]||t.status],['Prioridade',t.priority],['Setor',t.sector],['Responsável',t.assignee||'Não Definido'],['Data E Horário',ptDate(t.dueAt)]];
+  const values=[['Tipo',t.type],['Status',stateLabel[t.status]||t.status],['Prioridade',t.priority],['Setor',capWords(t.sector)],['Responsável',capWords(t.assignee||'Não Definido')],['Data e Horário',ptDate(t.dueAt)]];
   $('detailContent').innerHTML='<div class="detail-grid">'+values.map(([a,b])=>'<div><strong>'+esc(a)+'</strong><span>'+esc(b)+'</span></div>').join('')+'</div><strong>Detalhes</strong><div class="detail-note">'+esc(t.details||'Sem Detalhes Adicionais.')+'</div>';
   $('openDelete').classList.toggle('auth-hidden',role!=='admin');modal('detail',true)
 }
 
 function confirmDeleteNew(id){
-  if(role!=='admin'){toast('A Exclusão É Restrita Ao Administrador.');return}
+  if(role!=='admin'){toast('A Exclusão é Restrita ao Administrador.');return}
   const t=items.find(x=>x.id===id);if(!t)return;
   deleteId=id;$('deleteDescription').textContent=t.type+': '+capWords(t.title)+' — '+(stateLabel[t.status]||t.status);modal('deleteConfirm',true);
 }
@@ -240,11 +255,11 @@ function render(){renderAllNew()}
 $('taskForm').onsubmit = async function(event){
   event.preventDefault();if(!user)return;
   const date=$('dueDate').value,time=$('dueTime').value;
-  if(time&&!date){toast('Informe A Data Antes Do Horário.');return}
+  if(time&&!date){toast('Informe a Data Antes do Horário.');return}
   if($('type').value==='Evento'&&!date){toast('Informe A Data Do Evento.');return}
   const data={title:capWords($('title').value),type:$('type').value,priority:$('priority').value,sector:$('sector').value,assignee:$('assignee').value,dueAt:date?(time?date+'T'+time:date):'',details:$('details').value.trim(),status:'aberta',createdByUid:user.uid,createdByEmail:user.email,createdAt:serverTimestamp(),updatedAt:serverTimestamp()};
   if(!data.title)return;
-  if(role!=='admin'&&data.type!=='Ocorrência'){toast('Apenas Administradores Podem Criar Tarefas E Eventos.');return}
+  if(role!=='admin'&&data.type!=='Ocorrência'){toast('Apenas Administradores Podem Criar Tarefas e Eventos.');return}
   $('saveTask').disabled=true;
   try{await addDoc(collection(db,'tarefas'),data);modal('editor',false);
     if(date&&data.type==='Evento'){const [y,m]=date.split('-').map(Number);selectedDay=date;monthCursor=new Date(y,m-1,1);document.querySelector('[data-page="agenda"]').click()}
@@ -292,17 +307,17 @@ $('completeForm').onsubmit = async (e) => {
     });
     await batch.commit();
     modal('complete', false);
-    toast('Atividade atualizada.');
+    toast('Atividade Atualizada.');
   } catch (err) {
     console.error(err);
-    toast(`Falha ao atualizar: ${err.code || err.message}`);
+    toast(`Falha ao Atualizar: ${err.code || err.message}`);
   }
 };
 
 if (!cfg?.apiKey || !cfg?.projectId) {
   $('setupAlert').classList.remove('hidden');
   $('login').classList.remove('hidden');
-  toast('Configuração Firebase ausente.');
+  toast('Configuração Firebase Ausente.');
 } else {
   const app = initializeApp(cfg);
   auth = getAuth(app);
@@ -314,7 +329,7 @@ if (!cfg?.apiKey || !cfg?.projectId) {
       await signInWithEmailAndPassword(auth, $('email').value.trim(), $('password').value);
     } catch (err) {
       console.error(err);
-      toast(`Falha no login: ${err.code || err.message}`);
+      toast(`Falha no Login: ${err.code || err.message}`);
     }
   };
 
@@ -337,7 +352,7 @@ if (!cfg?.apiKey || !cfg?.projectId) {
       const userSnap = await getDoc(doc(db, 'usuarios', current.uid));
       if (!userSnap.exists() || userSnap.data().ativo !== true) {
         await signOut(auth);
-        toast('Conta sem autorização operacional.');
+        toast('Conta sem Autorização Operacional.');
         return;
       }
 
@@ -345,8 +360,8 @@ if (!cfg?.apiKey || !cfg?.projectId) {
       $('userLabel').textContent = current.email;
       $('roleLabel').textContent = role === 'admin' ? 'Administrador' : 'Operador';
       $('roleInfo').textContent = role === 'admin'
-        ? 'Administrador: pode registrar eventos, tarefas e ocorrências.'
-        : 'Operador: pode registrar ocorrências e concluir atividades.';
+        ? 'Administrador: Pode Registrar Eventos, Tarefas e Ocorrências.'
+        : 'Operador: Pode Registrar Ocorrências e Concluir Atividades.';
       $('login').classList.add('hidden');
       $('app').classList.remove('hidden');
 
@@ -364,11 +379,11 @@ if (!cfg?.apiKey || !cfg?.projectId) {
         render();
       }, (err) => {
         console.error(err);
-        toast(`Erro ao sincronizar: ${err.code || err.message}`);
+        toast(`Erro ao Sincronizar: ${err.code || err.message}`);
       });
     } catch (err) {
       console.error(err);
-      toast(`Erro de autorização: ${err.code || err.message}`);
+      toast(`Erro de Autorização: ${err.code || err.message}`);
     }
   });
 }
