@@ -1,6 +1,6 @@
 import {getApps,getApp,initializeApp} from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
 import {getAuth,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
-import {getFirestore,doc,collection,setDoc,getDoc,onSnapshot,writeBatch,serverTimestamp,query,orderBy} from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+import {getFirestore,doc,collection,setDoc,getDoc,getDocs,onSnapshot,writeBatch,serverTimestamp,query,orderBy} from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
 const $=id=>document.getElementById(id);
 const app=getApps().length?getApp():initializeApp(window.CHACARA_FIREBASE_CONFIG);
@@ -111,9 +111,32 @@ function resetUi(){
 }
 function historyView(){
   $("milkHistoryList").innerHTML=history.length?history.map(r=>
-    '<article class="milk-history-row"><strong>'+brDate(r.data)+'</strong><span>'+Number(r.conjuntos||12)+' Conjuntos Substituídos</span><p>'+String(r.observacoes||"Sem Observações").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))+'</p></article>'
+    '<article class="milk-history-row"><strong>'+brDate(r.data)+'</strong><span>'+Number(r.conjuntos||12)+' Conjuntos Substituídos</span><p>'+String(r.observacoes||"Sem Observações").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))+'</p>'+
+    (admin?'<button class="review-delete" data-milk-review-delete="'+r.id+'" type="button" title="Excluir Troca" aria-label="Excluir Troca de '+brDate(r.data)+'">×</button>':'')+'</article>'
   ).join(""):'<div class="machine-empty">Nenhuma Troca de Teteiras Registrada.</div>';
 }
+async function deleteMilkReview(id){
+  if(!admin||!operator||!ready||!model||working)return;
+  const selected=history.find(x=>x.id===id);if(!selected)return;
+  if(!confirm('Excluir a Troca de Teteiras de '+brDate(selected.data)+'? O Histórico Será Corrigido e a Exclusão Auditada.'))return;
+  working=true;
+  try{
+    const all=await getDocs(collection(db,'manutencaoOrdenha','teteiras','trocas'));
+    const ordered=all.docs.map(x=>({id:x.id,...x.data()})).sort((a,b)=>String(b.data||'').localeCompare(String(a.data||''))||Number(b.createdAt?.seconds||0)-Number(a.createdAt?.seconds||0));
+    if(!ordered.some(x=>x.id===id))throw Error('Lançamento Não Encontrado.');
+    const isLatest=ordered[0].id===id,previous=ordered.find(x=>x.id!==id);
+    const batch=writeBatch(db);
+    batch.delete(doc(db,'manutencaoOrdenha','teteiras','trocas',id));
+    if(isLatest)batch.update(ref,{dataTroca:previous?.data||'',updatedByUid:operator.uid,updatedAt:serverTimestamp()});
+    batch.set(doc(collection(db,'auditoriaManutencao')),{origem:'ordenha',registroId:id,referenciaId:'teteiras',
+      descricao:'Troca de Teteiras — '+(selected.conjuntos||12)+' Conjuntos',data:selected.data||'',
+      actorUid:operator.uid,actorEmail:operator.email||'',at:serverTimestamp()});
+    await batch.commit();
+    alertMsg('Troca Excluída. '+(isLatest?'Referência de Data Recalculada.':'Histórico Atualizado.'));
+  }catch(error){console.error(error);alertMsg('Falha ao Excluir Troca: '+(error.code||error.message),true)}
+  finally{working=false}
+}
+$("milkHistoryList").addEventListener("click",e=>{const b=e.target.closest('[data-milk-review-delete]');if(b)deleteMilkReview(b.dataset.milkReviewDelete)});
 async function saveSettings(e){
   e.preventDefault();if(!admin||!operator||working)return;
   let c;try{c=validate(getInputs())}catch(error){alertMsg(error.message,true);return}
@@ -175,7 +198,7 @@ onAuthStateChanged(auth,async user=>{
       alertMsg(ready?"Manutenção da Ordenha Sincronizada.":"Cadastre os Parâmetros para Iniciar o Acompanhamento.");
     },error=>{console.error(error);alertMsg("Sem Permissão para Ler a Manutenção da Ordenha. Publique as Regras Atualizadas do Firestore.",true)});
     stopHistory=onSnapshot(query(collection(db,"manutencaoOrdenha","teteiras","trocas"),orderBy("createdAt","desc")),snap=>{
-      history=snap.docs.map(d=>d.data());historyView()
+      history=snap.docs.map(d=>({id:d.id,...d.data()}));historyView()
     },error=>{console.error(error);$("milkHistoryList").textContent="Falha ao Carregar o Histórico. Confira as Regras."});
   }catch(error){console.error(error);alertMsg("Falha na Autorização: "+error.message,true)}
 });
