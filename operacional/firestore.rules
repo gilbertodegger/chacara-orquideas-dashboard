@@ -1,0 +1,76 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function active() {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.ativo == true;
+    }
+    function admin() {
+      return active() &&
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.role == 'admin';
+    }
+    match /usuarios/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+    match /tarefas/{taskId} {
+      allow read: if active();
+      allow create: if active()
+        && request.resource.data.keys().hasOnly(['title','type','priority','sector','assignee','dueAt','details','status','createdByUid','createdByEmail','createdAt','updatedAt'])
+        && request.resource.data.createdByUid == request.auth.uid
+        && request.resource.data.status == 'aberta'
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 130
+        && request.resource.data.priority in ['Baixa','Normal','Urgente','Crítica']
+        && request.resource.data.type in ['Ocorrência','Tarefa','Evento']
+        && (request.resource.data.type == 'Ocorrência' || admin())
+        && request.resource.data.sector is string
+        && request.resource.data.sector.size() <= 120
+        && request.resource.data.assignee is string
+        && request.resource.data.assignee.size() <= 80
+        && request.resource.data.details is string
+        && request.resource.data.details.size() <= 3000
+        && request.resource.data.dueAt is string
+        && request.resource.data.dueAt.size() <= 25
+        && request.resource.data.createdByEmail == request.auth.token.email
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update: if active()
+        && resource.data.status in ['aberta','andamento']
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status','updatedAt','lastActionByUid','lastActionByEmail','lastActionByName',
+          'completedBy','completedByUid','completedAt','completedAtLocal','completionNote'
+        ])
+        && request.resource.data.status in ['andamento','concluida']
+        && (request.resource.data.status == 'concluida' || resource.data.status == 'aberta')
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.lastActionByUid == request.auth.uid
+        && request.resource.data.lastActionByName is string
+        && request.resource.data.lastActionByName.size() > 0
+        && (request.resource.data.status != 'concluida' || (
+          request.resource.data.completedByUid == request.auth.uid &&
+          request.resource.data.completedAt == request.time
+        ));
+      allow delete: if admin();
+    }
+    match /auditoria/{logId} {
+      allow read: if active();
+      allow create: if active()
+        && request.resource.data.keys().hasOnly(['taskId','action','actorUid','actorEmail','actorName','note','at'])
+        && request.resource.data.actorUid == request.auth.uid
+        && request.resource.data.action in ['andamento','concluida','exclusao']
+        && (request.resource.data.action != 'exclusao' || admin())
+        && request.resource.data.actorEmail == request.auth.token.email
+        && request.resource.data.actorName is string
+        && request.resource.data.actorName.size() > 0
+        && request.resource.data.actorName.size() <= 80
+        && request.resource.data.note is string
+        && request.resource.data.note.size() <= 1500
+        && request.resource.data.at == request.time;
+      allow update, delete: if false;
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}
