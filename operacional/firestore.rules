@@ -121,6 +121,51 @@ service cloud.firestore {
         && request.resource.data.at == request.time;
       allow update, delete: if false;
     }
+    // Componentes Independentes de Ordenha. Edição Apenas pelo Administrador.
+    match /manutencaoOrdenha/teteiras/componentes/{componentId} {
+      allow read: if active() && componentId in ['kit-iq','kit-vaso','mangueira-silicone'];
+      allow create, update: if admin()
+        && componentId in ['kit-iq','kit-vaso','mangueira-silicone']
+        && request.resource.data.keys().hasOnly(['material','dataTroca','limiteOrdenhas','limiteMeses','observacoes','updatedByUid','updatedAt'])
+        && request.resource.data.keys().hasAll(['material','dataTroca','limiteOrdenhas','limiteMeses','observacoes','updatedByUid','updatedAt'])
+        && request.resource.data.material is string
+        && request.resource.data.dataTroca is string
+        && request.resource.data.dataTroca.size() <= 10
+        && (request.resource.data.dataTroca == '' || request.resource.data.dataTroca.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$'))
+        && request.resource.data.observacoes is string
+        && request.resource.data.observacoes.size() <= 1200
+        && request.resource.data.updatedByUid == request.auth.uid
+        && request.resource.data.updatedAt == request.time
+        && (
+          (componentId == 'mangueira-silicone'
+            && request.resource.data.material == 'Silicone'
+            && (request.resource.data.limiteOrdenhas == null ||
+               (request.resource.data.limiteOrdenhas is int && request.resource.data.limiteOrdenhas >= 1 && request.resource.data.limiteOrdenhas <= 1000000))
+            && (request.resource.data.limiteMeses == null ||
+               (request.resource.data.limiteMeses is int && request.resource.data.limiteMeses >= 1 && request.resource.data.limiteMeses <= 1000000)))
+          ||
+          (componentId in ['kit-iq','kit-vaso']
+            && ((request.resource.data.material == 'Borracha' && request.resource.data.limiteOrdenhas == 2500 && request.resource.data.limiteMeses == 6)
+            || (request.resource.data.material == 'Silicone' && request.resource.data.limiteOrdenhas == 5000 && request.resource.data.limiteMeses == 12)))
+        );
+      allow delete: if false;
+      match /trocas/{trocaId} {
+        allow read: if active();
+        allow create: if admin()
+          && request.resource.data.keys().hasOnly(['data','material','observacoes','createdAt','createdByUid'])
+          && request.resource.data.keys().hasAll(['data','material','observacoes','createdAt','createdByUid'])
+          && request.resource.data.data is string
+          && request.resource.data.data.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+          && request.resource.data.material is string
+          && ((componentId == 'mangueira-silicone' && request.resource.data.material == 'Silicone')
+            || (componentId in ['kit-iq','kit-vaso'] && request.resource.data.material in ['Borracha','Silicone']))
+          && request.resource.data.observacoes is string
+          && request.resource.data.observacoes.size() <= 1200
+          && request.resource.data.createdByUid == request.auth.uid
+          && request.resource.data.createdAt == request.time;
+        allow update, delete: if false;
+      }
+    }
     match /manutencaoOrdenha/{configId} {
       allow read: if configId == 'teteiras' && active();
       allow create, update: if configId == 'teteiras' && admin()
