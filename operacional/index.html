@@ -414,6 +414,7 @@ main{padding:18px 20px 26px}
 .machine-delete-required{font-size:18px;font-weight:850;color:#a63836;margin:8px 0}
 @media(max-width:1100px){.milk-shell{grid-template-columns:1fr}}
 @media(max-width:700px){.milk-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.milk-panel{padding:12px}.milk-results{grid-template-columns:1fr 1fr}}
+.milk-limit-reason{display:block;color:#6e8370;font-size:10px;margin-top:4px}.milk-panel input[readonly]{background:#f0f4ee;color:#234a33;font-weight:800;cursor:default}.milk-panel .field small{font-size:11px;color:#637d69}
 </style>
 </head>
 <body>
@@ -532,7 +533,7 @@ main{padding:18px 20px 26px}
 <div class="machine-stat"><strong id="milkDailyHours">—</strong><span>Horas por Conjunto / Dia</span></div>
 <div class="machine-stat"><strong id="milkDailyCycles">—</strong><span>Vacas por Conjunto / Dia</span></div>
 <div class="machine-stat"><strong id="milkUsedHours">—</strong><span>Horas Estimadas Desde a Troca</span></div>
-<div class="machine-stat"><strong id="milkNextChange">—</strong><span>Previsão da Próxima Troca</span></div>
+<div class="machine-stat"><strong id="milkNextChange">—</strong><span>Previsão da Próxima Troca</span><small id="milkLimitReason" class="milk-limit-reason">—</small></div>
 </div>
 <div class="milk-shell">
 <section class="milk-panel">
@@ -546,7 +547,7 @@ main{padding:18px 20px 26px}
 <div class="field"><label for="milkDuration3">3ª Ordenha — Duração (Horas)</label><input id="milkDuration3" type="number" min="0.1" max="15" step="0.05" placeholder="Ex.: 2.5" /></div>
 <div class="field"><label for="milkLastChange">Data da Última Troca de Teteiras</label><input id="milkLastChange" type="date"/></div>
 <div class="field"><label for="milkLimitHours">Limite de Uso por Conjunto (Horas)</label><input id="milkLimitHours" type="number" min="1" step="0.1" placeholder="Conforme Fabricante" /></div>
-<div class="field"><label for="milkLimitCycles">Limite de Ordenhas por Conjunto</label><input id="milkLimitCycles" type="number" min="1" step="1" placeholder="Conforme Fabricante" /></div>
+<div class="field"><label for="milkLimitCycles">Limite de Ordenhas por Teteira (GEA)</label><input id="milkLimitCycles" type="number" value="5000" readonly aria-readonly="true"/><small class="muted">Máximo de 5.000 Ordenhas ou 12 Meses.</small></div>
 <div class="field full"><label for="milkNotes">Observações da Manutenção</label><textarea id="milkNotes" maxlength="1500" placeholder="Marca e Modelo das Teteiras, Procedimentos e Observações"></textarea></div>
 </div>
 <div class="dialogfooter" id="milkAdminSettings" hidden><button id="milkSave" type="submit" class="btn">Salvar Parâmetros</button></div>
@@ -558,11 +559,11 @@ main{padding:18px 20px 26px}
 <div><span>Dias Desde a Última Troca</span><strong id="milkDaysSince">—</strong></div>
 <div><span>Ordenhas Estimadas por Conjunto</span><strong id="milkUsedCycles">—</strong></div>
 <div><span>Horas Restantes por Conjunto</span><strong id="milkRemainingHours">—</strong></div>
-<div><span>Ordenhas Restantes por Conjunto</span><strong id="milkRemainingCycles">—</strong></div>
+<div><span>Ordenhas Restantes por Conjunto</span><strong id="milkRemainingCycles">—</strong></div><div><span>Limite de 5.000 Ordenhas</span><strong id="milkMilkingLimit">—</strong></div><div><span>Limite de 12 Meses</span><strong id="milkCalendarLimit">—</strong></div>
 </div>
 <p id="milkCalcExplanation" class="milk-explainer"></p>
 <div class="milk-math">Horas por Conjunto / Dia = Duração 1 + Duração 2 + Duração 3.<br/>Vacas por Conjunto / Dia = Vacas × 3 Ordenhas ÷ 12 Conjuntos (ou Quantidade Configurada).</div>
-<p class="milk-caveat"><strong>Atenção:</strong> Horas estimadas representam o tempo de uso dos conjuntos durante as sessões. Não substituem a contagem real de vácuo ou a recomendação técnica da GEA. A previsão assume a mesma rotina desde a última troca.</p>
+<p class="milk-caveat"><strong>Critério de Troca GEA:</strong> Para Teteiras de Silicone, Até 5.000 Ordenhas por Teteira ou 12 Meses, o que Ocorrer Primeiro. A Referência do Fabricante É Baseada em Duas Ordenhas Diárias; Aqui São Utilizadas Três. As Horas de Sessão Não Equivalem ao Tempo Real de Vácuo Aplicado. <a href="https://www.gea.com/pt/products/milking-farming-barn/dairyservice-dairy-farm-service/milking-liner-overview/" target="_blank" rel="noopener noreferrer">Fonte: GEA</a>.</p>
 <h4>Histórico de Trocas</h4>
 <div id="milkHistoryList" class="milk-history"></div>
 </section>
