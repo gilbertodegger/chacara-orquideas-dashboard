@@ -31,6 +31,9 @@ let currentNotes = [];
 let settings = null;
 let optionEdit = { category: null, id: null };
 let settingsWarning = '';
+let configDrag = null;
+let configReordering = false;
+let sectorOrderMigrationAttempted = false;
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({
   '&': '&amp;',
@@ -143,7 +146,7 @@ const SETTING_GROUPS=[
   {key:'tipos',label:'Tipos',single:'Tipo'}
 ];
 const DEFAULT_SETTINGS={
-  setores:['Ordenha','Pátio e Acessos','Manutenção Máquinas','Manutenção Equipamentos','Confinamento','Escritório','Farmácia','Lavanderia','Alimentação','Sala do Tanque','Outros'],
+  setores:['Outros','Ordenha','Pátio e Acessos','Manutenção Máquinas','Manutenção Equipamentos','Confinamento','Escritório','Farmácia','Lavanderia','Alimentação','Sala do Tanque'],
   responsaveis:['Gilberto','Teodoro','Marília','Funcionário'],
   tipos:['Ocorrência','Tarefa','Evento','Rotina']
 };
@@ -161,7 +164,12 @@ function readSettings(raw){
     const unique=new Set();
     basis[key]=arr.filter(entry=>entry&&typeof entry==='object'&&typeof entry.id==='string'&&entry.id.length<=90&&typeof entry.nome==='string'&&entry.nome.length<=80)
       .filter(entry=>{const n=normalizedName(entry.nome);if(!n||unique.has(n))return false;unique.add(n);return true})
-      .map(entry=>({id:entry.id,nome:entry.nome.trim(),ativo:entry.ativo===true}));
+      .map(entry=>({id:entry.id,nome:entry.nome.trim(),ativo:entry.ativo===true,...(entry.ordemPersonalizada===true?{ordemPersonalizada:true}:{})}));
+  }
+  // Em dados anteriores à ordenação manual, Outros passa a ser o primeiro setor.
+  if(!basis.setores.some(item=>item.ordemPersonalizada===true)){
+    const otherIndex=basis.setores.findIndex(item=>normalizedName(item.nome)==='outros');
+    if(otherIndex>0)basis.setores.unshift(basis.setores.splice(otherIndex,1)[0]);
   }
   // Os tipos internos são usados pelas regras de segurança e pelo calendário.
   for(const type of PROTECTED_TYPES){
@@ -194,7 +202,8 @@ const CFG_ICONS={
   edit:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 17 0 3 3 0 12-12-3-3L4 17Z"/><path d="m14 7 3 3"/></svg>',
   off:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9"/><path d="M6.4 5.4a9 9 0 1 0 11.2 0"/></svg>',
   on:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>',
-  lock:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>'
+  lock:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>',
+  move:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h.01M15 4h.01M8 10h.01M15 10h.01M8 16h.01M15 16h.01M8 22h.01M15 22h.01" stroke-width="3.4" stroke-linecap="round"/></svg>'
 };
 function renderSettings(){
   const wrap=$('settingsCards');
@@ -206,7 +215,8 @@ function renderSettings(){
       const locked=isProtected(key,item);
       const editTitle=locked?'Tipo Essencial do Sistema':'Renomear Opção';
       const toggleTitle=locked?'Tipo Essencial do Sistema':item.ativo?'Desativar Opção':'Reativar Opção';
-      return '<div class="config-item '+(item.ativo?'':'inactive')+'">'+
+      return '<div class="config-item '+(item.ativo?'':'inactive')+'" data-config-id="'+esc(item.id)+'">'+
+        '<button class="config-drag-handle" type="button" title="Arrastar para alterar a ordem" aria-label="Mover '+esc(item.nome)+'. Arraste ou use as setas para cima e para baixo." data-config-grip="1">'+CFG_ICONS.move+'</button>'+ 
         '<span class="config-item-name">'+esc(item.nome)+'</span>'+
         (locked?'<span class="config-badge">Fixo</span>':!item.ativo?'<span class="config-badge">Inativo</span>':'')+
         '<div class="config-row-actions">'+
@@ -216,7 +226,8 @@ function renderSettings(){
     }).join('');
     return '<article class="config-card"><div class="config-card-head"><div><h3>'+esc(label)+'</h3><span class="config-count">'+activeCount+' Ativas</span></div>'+
       '<button class="btn config-add" type="button" data-option-action="add" data-option-key="'+key+'" title="Adicionar '+esc(label)+'" aria-label="Adicionar '+esc(label)+'">+</button></div>'+
-      '<div class="config-items">'+rows+'</div>'+
+      '<div class="config-items" data-config-key="'+key+'">'+rows+'</div>'+
+      '<p class="config-note">Arraste pelo ícone de pontos para reorganizar. No teclado, use ↑ ou ↓.</p>'+ 
       (key==='tipos'?'<p class="config-note">Ocorrência e Evento São Essenciais para o Funcionamento do Tablet e da Agenda.</p>':'')+'</article>';
   }).join('');
   const notice=$('settingsNotice');
@@ -265,6 +276,125 @@ async function mutateOptions(category,action,id='',value=''){
     transaction.set(configDoc(),{...data,updatedByUid:user.uid,updatedAt:serverTimestamp()});
   });
 }
+
+async function saveConfigOrder(category,ids){
+  if(role!=='admin'||!user)throw new Error('Somente o Administrador Pode Reorganizar Configurações.');
+  if(!SETTING_GROUPS.some(group=>group.key===category))throw new Error('Categoria Inválida.');
+  await runTransaction(db,async transaction=>{
+    const snapshot=await transaction.get(configDoc());
+    const data=readSettings(snapshot.exists()?snapshot.data():null);
+    const entries=data[category];
+    if(ids.length!==entries.length || new Set(ids).size!==ids.length ||
+       !entries.every(item=>ids.includes(item.id)))
+      throw new Error('A Lista Foi Alterada em Outro Dispositivo. Atualize e Tente Novamente.');
+    const byId=new Map(entries.map(item=>[item.id,item]));
+    data[category]=ids.map(id=>({...byId.get(id),ordemPersonalizada:true}));
+    transaction.set(configDoc(),{...data,updatedByUid:user.uid,updatedAt:serverTimestamp()});
+  });
+}
+async function commitConfigOrder(category,ids){
+  if(configReordering)return;
+  configReordering=true;
+  try{
+    await saveConfigOrder(category,ids);
+    toast('Nova Ordem Salva e Sincronizada.');
+  }catch(error){
+    console.error('Ordenação das configurações:',error);
+    toast('Não Foi Possível Reordenar: '+(error.message||error.code));
+    renderSettings();
+  }finally{configReordering=false}
+}
+// A estrutura anterior pode conter "Outros" no final. Reordena uma única vez
+// no Firestore, sem mexer em nomes, IDs, estados ou registros já cadastrados.
+async function migrateOldSectorOrder(raw){
+  const original=raw?.setores;
+  if(role!=='admin'||!user||!Array.isArray(original)||
+     original.some(item=>item?.ordemPersonalizada===true))return;
+  const position=original.findIndex(item=>normalizedName(item?.nome)==='outros');
+  if(position<=0)return;
+  try{
+    await runTransaction(db,async transaction=>{
+      const snapshot=await transaction.get(configDoc());
+      if(!snapshot.exists())return;
+      const latest=snapshot.data();
+      if(!Array.isArray(latest.setores)||
+         latest.setores.some(item=>item?.ordemPersonalizada===true)||
+         latest.setores.findIndex(item=>normalizedName(item?.nome)==='outros')<=0)return;
+      const data=readSettings(latest);
+      data.setores=data.setores.map(item=>({...item,ordemPersonalizada:true}));
+      transaction.set(configDoc(),{...data,updatedByUid:user.uid,updatedAt:serverTimestamp()});
+    });
+  }catch(error){console.error('Migração da ordem de setores:',error)}
+}
+function configListIds(list){
+  return [...list.querySelectorAll(':scope > .config-item')].map(row=>row.dataset.configId);
+}
+function finishConfigDrag(cancel=false){
+  const drag=configDrag;
+  if(!drag)return;
+  configDrag=null;
+  drag.row.classList.remove('is-dragging');
+  drag.list.classList.remove('is-reordering');
+  if(cancel){
+    renderSettings();
+    return;
+  }
+  if(!drag.active)return;
+  const ids=configListIds(drag.list);
+  if(ids.join('\u0001')!==drag.original.join('\u0001'))
+    commitConfigOrder(drag.category,ids);
+}
+const settingsList=$('settingsCards');
+settingsList.addEventListener('pointerdown',event=>{
+  const handle=event.target.closest('[data-config-grip]');
+  if(!handle||role!=='admin'||configReordering||event.button!==0)return;
+  const row=handle.closest('.config-item');
+  const list=row?.closest('.config-items');
+  if(!list)return;
+  event.preventDefault();
+  configDrag={
+    pointerId:event.pointerId,row,list,category:list.dataset.configKey,
+    startY:event.clientY,active:false,original:configListIds(list)
+  };
+  settingsList.setPointerCapture(event.pointerId);
+});
+settingsList.addEventListener('pointermove',event=>{
+  const drag=configDrag;
+  if(!drag||event.pointerId!==drag.pointerId)return;
+  if(!drag.active&&Math.abs(event.clientY-drag.startY)<5)return;
+  if(!drag.active){
+    drag.active=true;
+    drag.row.classList.add('is-dragging');
+    drag.list.classList.add('is-reordering');
+  }
+  const target=document.elementFromPoint(event.clientX,event.clientY)?.closest('.config-item');
+  if(!target||target===drag.row||target.parentElement!==drag.list)return;
+  const midpoint=target.getBoundingClientRect().top+target.getBoundingClientRect().height/2;
+  if(event.clientY<midpoint)drag.list.insertBefore(drag.row,target);
+  else drag.list.insertBefore(drag.row,target.nextElementSibling);
+});
+settingsList.addEventListener('pointerup',event=>{
+  if(configDrag?.pointerId===event.pointerId)finishConfigDrag(false);
+});
+settingsList.addEventListener('pointercancel',event=>{
+  if(configDrag?.pointerId===event.pointerId)finishConfigDrag(true);
+});
+settingsList.addEventListener('keydown',event=>{
+  const handle=event.target.closest('[data-config-grip]');
+  if(!handle||role!=='admin'||configReordering||
+     !['ArrowUp','ArrowDown'].includes(event.key))return;
+  event.preventDefault();
+  const row=handle.closest('.config-item'),list=row?.closest('.config-items');
+  if(!list)return;
+  const rows=[...list.children],index=rows.indexOf(row);
+  const to=index+(event.key==='ArrowUp'?-1:1);
+  if(to<0||to>=rows.length)return;
+  if(to<index)list.insertBefore(row,rows[to]);
+  else list.insertBefore(row,rows[to].nextElementSibling);
+  handle.focus();
+  commitConfigOrder(list.dataset.configKey,configListIds(list));
+});
+
 $('settingsCards').addEventListener('click',async e=>{
   const button=e.target.closest('[data-option-action]');
   if(!button||role!=='admin')return;
@@ -755,11 +885,17 @@ if (!cfg?.apiKey || !cfg?.projectId) {
         document.querySelector('[data-page="tarefas"]').click();
       }
       settings=defaults();
+      sectorOrderMigrationAttempted=false;
       renderFormOptions();
       renderSettings();
       settingsWarning='';
       unsubscribeSettings=onSnapshot(configDoc(),snapshot=>{
-        settings=readSettings(snapshot.exists()?snapshot.data():null);
+        const raw=snapshot.exists()?snapshot.data():null;
+        settings=readSettings(raw);
+        if(role==='admin'&&!sectorOrderMigrationAttempted){
+          sectorOrderMigrationAttempted=true;
+          migrateOldSectorOrder(raw);
+        }
         settingsWarning='';
         renderFormOptions();
         renderSettings();
