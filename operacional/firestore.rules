@@ -424,16 +424,46 @@ service cloud.firestore {
     }
     // Lista Permanente de Compras: criação, edição e compra por usuários ativos.
     // Exclusão permanente somente por administradores.
+    // Catálogo: operadores consultam; apenas administradores criam e alteram.
+    match /catalogoProdutos/{catalogId} {
+      allow read: if active();
+      allow create: if admin()
+        && request.resource.data.keys().hasOnly([
+          'nome','ativo','createdAt','createdByUid','updatedAt','updatedByUid'
+        ])
+        && request.resource.data.keys().hasAll([
+          'nome','ativo','createdAt','createdByUid','updatedAt','updatedByUid'
+        ])
+        && request.resource.data.nome is string
+        && request.resource.data.nome.size() > 0
+        && request.resource.data.nome.size() <= 150
+        && request.resource.data.ativo == true
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.createdByUid == request.auth.uid
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.updatedByUid == request.auth.uid;
+      allow update: if admin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'nome','ativo','updatedAt','updatedByUid'
+        ])
+        && request.resource.data.nome is string
+        && request.resource.data.nome.size() > 0
+        && request.resource.data.nome.size() <= 150
+        && request.resource.data.ativo is bool
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.updatedByUid == request.auth.uid;
+      allow delete: if false;
+    }
     match /compras/{purchaseId} {
       allow read: if active();
       allow create: if active()
         && request.resource.data.keys().hasOnly([
           'produto','quantidade','comprado','compradoEm','createdAt',
-          'createdByUid','updatedAt','updatedByUid'
+          'createdByUid','createdByName','completedByUid','completedByName','updatedAt','updatedByUid'
         ])
         && request.resource.data.keys().hasAll([
           'produto','quantidade','comprado','compradoEm','createdAt',
-          'createdByUid','updatedAt','updatedByUid'
+          'createdByUid','createdByName','completedByUid','completedByName','updatedAt','updatedByUid'
         ])
         && request.resource.data.produto is string
         && request.resource.data.produto.size() > 0
@@ -444,12 +474,17 @@ service cloud.firestore {
         && request.resource.data.comprado == false
         && request.resource.data.compradoEm == null
         && request.resource.data.createdByUid == request.auth.uid
+        && request.resource.data.createdByName is string
+        && request.resource.data.createdByName.size() > 0
+        && request.resource.data.createdByName.size() <= 80
+        && request.resource.data.completedByUid == null
+        && request.resource.data.completedByName == null
         && request.resource.data.createdAt == request.time
         && request.resource.data.updatedByUid == request.auth.uid
         && request.resource.data.updatedAt == request.time;
       allow update: if active()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'produto','quantidade','comprado','compradoEm','updatedAt','updatedByUid'
+          'produto','quantidade','comprado','compradoEm','completedByUid','completedByName','updatedAt','updatedByUid'
         ])
         && request.resource.data.produto is string
         && request.resource.data.produto.size() > 0
@@ -458,8 +493,25 @@ service cloud.firestore {
         && request.resource.data.quantidade.size() > 0
         && request.resource.data.quantidade.size() <= 100
         && request.resource.data.comprado is bool
+        && (
+          (request.resource.data.comprado == true
+            && (request.resource.data.get('completedByUid',null) == null ||
+              request.resource.data.get('completedByUid',null) is string)
+            && (request.resource.data.get('completedByName',null) == null ||
+              request.resource.data.get('completedByName',null) is string))
+          ||
+          (request.resource.data.comprado == false
+            && request.resource.data.get('completedByUid',null) == null
+            && request.resource.data.get('completedByName',null) == null)
+        )
         && request.resource.data.updatedAt == request.time
         && request.resource.data.updatedByUid == request.auth.uid
+        && (
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+            'completedByUid','completedByName'
+          ])
+          || request.resource.data.diff(resource.data).affectedKeys().hasAny(['comprado'])
+        )
         && (
           (request.resource.data.comprado == false
             && request.resource.data.compradoEm == null)
@@ -471,7 +523,11 @@ service cloud.firestore {
           !request.resource.data.diff(resource.data).affectedKeys().hasAny(['comprado'])
           ||
           (request.resource.data.comprado == true
-            && request.resource.data.compradoEm == request.time)
+            && request.resource.data.compradoEm == request.time
+            && request.resource.data.completedByUid == request.auth.uid
+            && request.resource.data.completedByName is string
+            && request.resource.data.completedByName.size() > 0
+            && request.resource.data.completedByName.size() <= 80)
           ||
           (request.resource.data.comprado == false
             && request.resource.data.compradoEm == null)
