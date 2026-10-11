@@ -374,6 +374,8 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time
         && request.resource.data.updatedAt == request.time;
       allow update: if active()
+        && resource.data.type != 'Evento'
+        && resource.data.type != 'Rotina'
         && resource.data.get('recurrence','none') == 'none'
         && resource.data.status in ['aberta','andamento']
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
@@ -396,6 +398,8 @@ service cloud.firestore {
         allow read: if active();
         allow create: if active()
           && exists(/databases/$(database)/documents/tarefas/$(taskId))
+          && get(/databases/$(database)/documents/tarefas/$(taskId)).data.type != 'Evento'
+          && get(/databases/$(database)/documents/tarefas/$(taskId)).data.type != 'Rotina'
           && get(/databases/$(database)/documents/tarefas/$(taskId)).data.status in ['aberta','andamento']
           && get(/databases/$(database)/documents/tarefas/$(taskId)).data.get('recurrence','none') == 'none'
           && request.resource.data.keys().hasOnly([
@@ -417,6 +421,62 @@ service cloud.firestore {
         allow update: if false;
         allow delete: if admin();
       }
+    }
+    // Lista Permanente de Compras: criação, edição e compra por usuários ativos.
+    // Exclusão permanente somente por administradores.
+    match /compras/{purchaseId} {
+      allow read: if active();
+      allow create: if active()
+        && request.resource.data.keys().hasOnly([
+          'produto','quantidade','comprado','compradoEm','createdAt',
+          'createdByUid','updatedAt','updatedByUid'
+        ])
+        && request.resource.data.keys().hasAll([
+          'produto','quantidade','comprado','compradoEm','createdAt',
+          'createdByUid','updatedAt','updatedByUid'
+        ])
+        && request.resource.data.produto is string
+        && request.resource.data.produto.size() > 0
+        && request.resource.data.produto.size() <= 150
+        && request.resource.data.quantidade is string
+        && request.resource.data.quantidade.size() > 0
+        && request.resource.data.quantidade.size() <= 100
+        && request.resource.data.comprado == false
+        && request.resource.data.compradoEm == null
+        && request.resource.data.createdByUid == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedByUid == request.auth.uid
+        && request.resource.data.updatedAt == request.time;
+      allow update: if active()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'produto','quantidade','comprado','compradoEm','updatedAt','updatedByUid'
+        ])
+        && request.resource.data.produto is string
+        && request.resource.data.produto.size() > 0
+        && request.resource.data.produto.size() <= 150
+        && request.resource.data.quantidade is string
+        && request.resource.data.quantidade.size() > 0
+        && request.resource.data.quantidade.size() <= 100
+        && request.resource.data.comprado is bool
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.updatedByUid == request.auth.uid
+        && (
+          (request.resource.data.comprado == false
+            && request.resource.data.compradoEm == null)
+          ||
+          (request.resource.data.comprado == true
+            && request.resource.data.compradoEm is timestamp)
+        )
+        && (
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['comprado'])
+          ||
+          (request.resource.data.comprado == true
+            && request.resource.data.compradoEm == request.time)
+          ||
+          (request.resource.data.comprado == false
+            && request.resource.data.compradoEm == null)
+        );
+      allow delete: if admin();
     }
     match /auditoria/{logId} {
       allow read: if active();
