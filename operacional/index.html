@@ -660,6 +660,14 @@ main{padding:18px 20px 26px}
   .app>aside .nav button{width:44px;min-width:44px;min-height:44px;flex:0 0 44px;padding:8px;gap:0;justify-content:center}
   .app>aside .nav .ops-nav-label{display:none}
 }
+
+/* Evita o zoom automatico do Safari/iOS ao focar campos da lista de compras. */
+@media(max-width:860px){
+  #purchaseProduct,
+  #purchaseQuantity,
+  #purchaseCatalogSearch,
+  #catalogName{font-size:16px}
+}
 </style>
 </head>
 <body>
