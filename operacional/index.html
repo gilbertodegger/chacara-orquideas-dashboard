@@ -579,6 +579,14 @@ main{padding:18px 20px 26px}
 .ops-event-actions button[data-delete]{color:#a34237;border-color:#efd7d3}
 .ops-events-empty{border:1px dashed #d6e2d4;border-radius:12px;padding:16px;color:#6d806e;background:#fff;font-size:12px}
 .ops-events-add{display:flex;justify-content:flex-end;padding-top:12px}
+.ops-events-filters{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin:0 0 15px;padding:12px;background:#fff;border:1px solid #dbe5da;border-radius:12px}
+.ops-events-month-filter{display:flex;flex-direction:column;gap:5px;color:#315b44;font-size:12px;font-weight:750}
+.ops-events-month-filter input{border:1px solid #cbdacd;border-radius:9px;background:#fff;color:#234d35;padding:8px 10px;min-height:43px;font:inherit;font-size:16px;min-width:180px}
+.ops-events-future-filter{display:inline-flex;align-items:center;gap:9px;min-height:43px;padding:8px 10px;border:1px solid #d5e1d3;border-radius:9px;background:#f8fbf8;color:#315b44;font-size:13px;font-weight:750;cursor:pointer}
+.ops-events-future-filter input{width:19px;height:19px;accent-color:#1b6044;cursor:pointer}
+.ops-events-result-count{margin-left:auto;font-size:12px;color:#67816d;padding:6px 0}
+@media(max-width:520px){.ops-events-filters{gap:9px}.ops-events-month-filter{flex:1}.ops-events-month-filter input{width:100%;min-width:0}.ops-events-result-count{width:100%;margin-left:0}}
+
 .purchase-heading h2{font-size:22px;color:#234b39;margin:0 0 5px}
 .purchase-heading p{margin:0 0 15px}
 .purchase-message{padding:11px 13px;border-radius:10px;background:#e6efe5;color:#315d44;font-size:12px;margin:0 0 12px}
@@ -760,6 +768,11 @@ main{padding:18px 20px 26px}
 <div class="ops-events-widget ops-events-full">
  <div class="ops-events-header"><div><h2>Eventos</h2><p>Eventos e Rotinas Programados por Semana ou Mês.</p></div>
  <div class="ops-events-switch"><button type="button" data-events-period="week">Semana</button><button type="button" data-events-period="month">Mês</button></div></div>
+ <div class="ops-events-filters">
+  <label class="ops-events-month-filter" for="eventsMonthPicker"><span>Escolher Mês</span><input type="month" id="eventsMonthPicker" aria-label="Escolher Mês e Ano"/></label>
+  <label class="ops-events-future-filter" for="eventsFutureOnly"><input type="checkbox" id="eventsFutureOnly" checked/><span>Apenas Futuros</span></label>
+  <span class="ops-events-result-count" id="eventsFullCount" aria-live="polite"></span>
+ </div>
  <div class="ops-events-range"><span id="eventsFullRange"></span>
  <div class="ops-events-nav"><button type="button" data-events-prev aria-label="Período Anterior">‹</button><button type="button" data-events-today>Hoje</button><button type="button" data-events-next aria-label="Próximo Período">›</button></div></div>
  <div class="ops-events-list" id="eventsFullList"></div>

@@ -526,8 +526,9 @@ function renderCalendarNew(){
 }
 
 
-let eventsPeriod='week';
+let eventsPeriod='month';
 let eventsAnchor=dayISO(new Date());
+let eventsFutureOnly=true;
 function activeEventWindow(){
  const [year,month,day]=eventsAnchor.split('-').map(Number),cursor=new Date(year,month-1,day,12);
  let first,last;
@@ -542,8 +543,20 @@ function renderEventsNew(){
  const {days,start,end}=activeEventWindow(),daily=expandOccurrencesForDays(days);
  const entries=days.flatMap(date=>(daily[date]||[]).filter(isEventItem).map(event=>({...event,occurrenceDate:date})))
   .sort((a,b)=>String(a.occurrenceAt||a.occurrenceDate).localeCompare(String(b.occurrenceAt||b.occurrenceDate))||String(a.title).localeCompare(String(b.title),'pt-BR'));
+ const now=new Date(),today=dayISO(now),minutesNow=now.getHours()*60+now.getMinutes();
+ // Ao filtrar eventos futuros, os eventos sem horário valem pelo dia inteiro.
+ const fullEntries=eventsFutureOnly?entries.filter(item=>{
+  const date=item.occurrenceDate||dateKey(item.dueAt);
+  if(date>today)return true;
+  if(date<today)return false;
+  const time=String(item.occurrenceAt||item.dueAt||'').match(/T(\d{2}):(\d{2})/);
+  return !time||Number(time[1])*60+Number(time[2])>=minutesNow;
+ }):entries;
  const range=ptDate(start)+' — '+ptDate(end);
  $('eventsQuickRange').textContent=range;$('eventsFullRange').textContent=range;
+ $('eventsMonthPicker').value=eventsAnchor.slice(0,7);
+ $('eventsFutureOnly').checked=eventsFutureOnly;
+ $('eventsFullCount').textContent=fullEntries.length+' '+(fullEntries.length===1?'Evento ou Rotina Exibido':'Eventos e Rotinas Exibidos');
  document.querySelectorAll('[data-events-period]').forEach(button=>{
   const selected=button.dataset.eventsPeriod===eventsPeriod;
   button.classList.toggle('selected',selected);button.setAttribute('aria-pressed',String(selected));
@@ -559,9 +572,20 @@ function renderEventsNew(){
    (role==='admin'?'<button type="button" data-delete="'+esc(item.id)+'" title="Excluir Evento">×</button>':'')+'</div></article>';
  };
  $('eventsQuickList').innerHTML=entries.length?entries.slice(0,8).map(card).join(''):'<div class="ops-events-empty">Nenhum Evento ou Rotina Neste Período.</div>';
- $('eventsFullList').innerHTML=entries.length?entries.map(card).join(''):'<div class="ops-events-empty">Nenhum Evento ou Rotina Neste Período.</div>';
+ $('eventsFullList').innerHTML=fullEntries.length?fullEntries.map(card).join(''):(eventsFutureOnly?'<div class="ops-events-empty">Não Há Eventos Futuros Neste Período. Desmarque Apenas Futuros Para Ver Eventos Anteriores.</div>':'<div class="ops-events-empty">Nenhum Evento ou Rotina Neste Período.</div>');
  if(entries.length>8)$('eventsQuickList').innerHTML+='<p class="ops-event-meta">Exibindo 8 de '+entries.length+' Ocorrências. Abra a Guia Eventos Para Ver Todas.</p>';
 }
+$('eventsMonthPicker').addEventListener('change',event=>{
+ const month=event.target.value;
+ if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))return;
+ eventsPeriod='month';
+ eventsAnchor=month+'-01';
+ renderEventsNew();
+});
+$('eventsFutureOnly').addEventListener('change',event=>{
+ eventsFutureOnly=event.target.checked;
+ renderEventsNew();
+});
 document.addEventListener('click',event=>{
  const toggle=event.target.closest('[data-events-period]');
  if(toggle){eventsPeriod=toggle.dataset.eventsPeriod;eventsAnchor=dayISO(new Date());renderEventsNew();return}
