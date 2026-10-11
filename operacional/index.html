@@ -306,6 +306,15 @@ main{padding:18px 20px 26px}
 @media(max-width:1180px){.config-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.config-grid{grid-template-columns:1fr}.config-card{padding:12px}}
 
+/* Configurações: arrastar e soltar no desktop e em telas sensíveis ao toque. */
+.config-drag-handle{display:grid;place-items:center;flex:0 0 30px;width:30px;height:38px;padding:4px;border:0;border-radius:8px;background:transparent;color:#6e8977;cursor:grab;touch-action:none}
+.config-drag-handle svg{width:19px;height:25px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+.config-drag-handle:hover{background:#edf4eb;color:#245a40}
+.config-drag-handle:focus-visible{outline:2px solid #be9859;outline-offset:1px}
+.config-items.is-reordering{user-select:none}
+.config-item.is-dragging{opacity:.55;border:1px dashed #4a8064;background:#edf5ec;pointer-events:none}
+@media(max-width:700px){.config-drag-handle{width:40px;height:43px;flex-basis:40px}.config-item{gap:5px}}
+
 /* Revisão de Máquinas — Interface Operacional iPad / Desktop */
 .machine-heading,.machine-config-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:13px}
 .machine-heading h2,.machine-config-heading h3{margin:0 0 4px;font-size:23px}
