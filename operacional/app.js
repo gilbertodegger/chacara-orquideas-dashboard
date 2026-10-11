@@ -556,7 +556,7 @@ function renderEventsNew(){
  $('eventsQuickRange').textContent=range;$('eventsFullRange').textContent=range;
  $('eventsMonthPicker').value=eventsAnchor.slice(0,7);
  $('eventsFutureOnly').checked=eventsFutureOnly;
- $('eventsFullCount').textContent=fullEntries.length+' '+(fullEntries.length===1?'Evento ou Rotina':'Eventos e Rotinas')+' Exibidos';
+ $('eventsFullCount').textContent=fullEntries.length+' '+(fullEntries.length===1?'Evento ou Rotina Exibido':'Eventos e Rotinas Exibidos');
  document.querySelectorAll('[data-events-period]').forEach(button=>{
   const selected=button.dataset.eventsPeriod===eventsPeriod;
   button.classList.toggle('selected',selected);button.setAttribute('aria-pressed',String(selected));
