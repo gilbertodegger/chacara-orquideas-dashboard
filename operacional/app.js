@@ -56,6 +56,7 @@ const fmt = function ptDate(raw){
   return `${d}/${m}/${y}`+(clock?` Às ${clock[1]}`:"");
 };
 
+const isEventItem=t=>['Evento','Rotina'].includes(t?.type);
 const stateLabel = {
   aberta: 'Em Aberto',
   andamento: 'Em Andamento',
@@ -64,7 +65,9 @@ const stateLabel = {
 
 const sectionLabel = {
   tarefas: 'Tarefas e Ocorrências',
+  eventos: 'Eventos',
   agenda: 'Agenda de Eventos',
+  compras: 'Lista de Compras',
   historico: 'Histórico de Atividades',
   maquinas: 'Revisão de Máquinas',
   ordenha: 'Manutenção da Ordenha',
@@ -94,7 +97,6 @@ document.querySelectorAll('[data-page]').forEach((button) => {
     if(['configuracoes','usuarios'].includes(button.dataset.page)&&role!=='admin')return;
     document.querySelectorAll('[data-page]').forEach((x) => x.classList.toggle('active', x === button));
     document.querySelectorAll('.section').forEach((x) => x.classList.toggle('active', x.id === button.dataset.page));
-    $('sectionName').textContent = sectionLabel[button.dataset.page] || 'Gestão Operacional';
     render();
   };
 });
@@ -352,16 +354,17 @@ const UI_ICONS={
 function summaryCard(task){
   const badge=task.priority==="Crítica"?"critica":task.priority==="Urgente"?"urgente":"";
   const done=task.status==="concluida";
+  const onlyEvent=isEventItem(task);
   return `<article class="task"><div><h3>${esc(capWords(task.title))}</h3><div class="chips">
    <span class="chip ${badge}">${esc(task.priority)}</span>
-   <span class="chip ${done?'concluida':''}">${esc(stateLabel[task.status]||task.status)}</span>
+   <span class="chip ${done?'concluida':''}">${esc(onlyEvent?'Programado':stateLabel[task.status]||task.status)}</span>
    <span class="chip">${esc(task.type)}</span>${isRecurring(task)?'<span class="chip recurrence">↻ '+recurrenceLabel(task)+'</span>':''}</div>
    <div class="muted">${esc(task.sector)} · Responsável: ${esc(task.assignee||'Não Definido')} · ${esc(ptDate(task.dueAt))}</div>
    ${task.details?`<p class="muted">${esc(task.details)}</p>`:''}</div>
    <div class="actions">
    <button class="btn secondary icon-action icon-search" type="button" data-detail="${esc(task.id)}" title="Detalhes" aria-label="Detalhes">${UI_ICONS.search}</button>
-   ${!isRecurring(task)&&task.status==="aberta"?`<button class="btn secondary" data-status="andamento" data-id="${esc(task.id)}">Iniciar</button>`:""}
-   ${!done&&!isRecurring(task)?`<button class="btn icon-action icon-check" type="button" data-status="concluida" data-id="${esc(task.id)}" title="Concluir" aria-label="Concluir">${UI_ICONS.check}</button>`:""}
+   ${!onlyEvent&&!isRecurring(task)&&task.status==="aberta"?`<button class="btn secondary" data-status="andamento" data-id="${esc(task.id)}">Iniciar</button>`:""}
+   ${!onlyEvent&&!done&&!isRecurring(task)?`<button class="btn icon-action icon-check" type="button" data-status="concluida" data-id="${esc(task.id)}" title="Concluir" aria-label="Concluir">${UI_ICONS.check}</button>`:""}
    ${role==="admin"?`<button class="delete-button icon-action icon-delete" type="button" data-delete="${esc(task.id)}" title="Excluir" aria-label="Excluir">${UI_ICONS.delete}</button>`:""}
    </div></article>`;
 }
@@ -392,28 +395,81 @@ function renderCalendarNew(){
   $('agendaList').innerHTML=dailyEvents.length?dailyEvents.map(t=>`<button type="button" class="agenda-entry ${eventType(t)}" data-detail="${esc(t.id)}" data-occurrence-date="${esc(t.occurrenceDate||'')}"><span class="mini">${esc((t.occurrenceAt||'').match(/T(\d{2}:\d{2})/)?.[1]||'Dia Inteiro')} · ${esc(t.type)} · ${esc(t.priority)}${isRecurring(t)?'<span class="repeat-indicator"> · ↻ '+recurrenceLabel(t)+'</span>':''}</span><b>${esc(capWords(t.title))}</b><span class="mini">${esc(t.sector)} · ${esc(stateLabel[t.status])}</span></button>`).join(''):'<div class="agenda-empty">Nenhuma Atividade para Este Dia.</div>';
 }
 
+
+let eventsPeriod='week';
+let eventsAnchor=dayISO(new Date());
+function activeEventWindow(){
+ const [year,month,day]=eventsAnchor.split('-').map(Number),cursor=new Date(year,month-1,day,12);
+ let first,last;
+ if(eventsPeriod==='week'){
+  first=new Date(cursor);first.setDate(first.getDate()-(first.getDay()+6)%7);
+  last=new Date(first);last.setDate(first.getDate()+6);
+ }else{first=new Date(year,month-1,1,12);last=new Date(year,month,0,12)}
+ const days=[];for(const d=new Date(first);d<=last;d.setDate(d.getDate()+1))days.push(dayISO(d));
+ return {days,start:dayISO(first),end:dayISO(last)};
+}
+function renderEventsNew(){
+ const {days,start,end}=activeEventWindow(),daily=expandOccurrencesForDays(days);
+ const entries=days.flatMap(date=>(daily[date]||[]).filter(isEventItem).map(event=>({...event,occurrenceDate:date})))
+  .sort((a,b)=>String(a.occurrenceAt||a.occurrenceDate).localeCompare(String(b.occurrenceAt||b.occurrenceDate))||String(a.title).localeCompare(String(b.title),'pt-BR'));
+ const range=ptDate(start)+' — '+ptDate(end);
+ $('eventsQuickRange').textContent=range;$('eventsFullRange').textContent=range;
+ document.querySelectorAll('[data-events-period]').forEach(button=>{
+  const selected=button.dataset.eventsPeriod===eventsPeriod;
+  button.classList.toggle('selected',selected);button.setAttribute('aria-pressed',String(selected));
+ });
+ const card=item=>{
+  const date=item.occurrenceDate||dateKey(item.dueAt);
+  const clock=String(item.occurrenceAt||item.dueAt||'').match(/T(\d{2}:\d{2})/)?.[1]||'Dia Inteiro';
+  return '<article class="ops-event-row"><div class="ops-event-when">'+esc(ptDate(date))+'<small>'+esc(clock)+'</small></div>'+
+   '<div><h3 class="ops-event-title">'+esc(capWords(item.title))+'</h3><div class="ops-event-meta">'+esc(item.type)+
+   ' · '+esc(item.sector||'Sem Setor')+' · '+esc(item.assignee||'Sem Responsável')+
+   (isRecurring(item)?' · ↻ '+esc(recurrenceLabel(item)):'')+'</div></div>'+
+   '<div class="ops-event-actions"><button type="button" data-detail="'+esc(item.id)+'" data-occurrence-date="'+esc(date)+'">Detalhes</button>'+
+   (role==='admin'?'<button type="button" data-delete="'+esc(item.id)+'" title="Excluir Evento">×</button>':'')+'</div></article>';
+ };
+ $('eventsQuickList').innerHTML=entries.length?entries.slice(0,8).map(card).join(''):'<div class="ops-events-empty">Nenhum Evento ou Rotina Neste Período.</div>';
+ $('eventsFullList').innerHTML=entries.length?entries.map(card).join(''):'<div class="ops-events-empty">Nenhum Evento ou Rotina Neste Período.</div>';
+ if(entries.length>8)$('eventsQuickList').innerHTML+='<p class="ops-event-meta">Exibindo 8 de '+entries.length+' Ocorrências. Abra a Guia Eventos Para Ver Todas.</p>';
+}
+document.addEventListener('click',event=>{
+ const toggle=event.target.closest('[data-events-period]');
+ if(toggle){eventsPeriod=toggle.dataset.eventsPeriod;eventsAnchor=dayISO(new Date());renderEventsNew();return}
+ let d=0;
+ if(event.target.closest('[data-events-prev]'))d=-1;
+ if(event.target.closest('[data-events-next]'))d=1;
+ if(event.target.closest('[data-events-today]')){eventsAnchor=dayISO(new Date());renderEventsNew();return}
+ if(d){
+  const [y,m,day]=eventsAnchor.split('-').map(Number),cursor=new Date(y,m-1,day,12);
+  if(eventsPeriod==='week')cursor.setDate(cursor.getDate()+d*7);else cursor.setMonth(cursor.getMonth()+d);
+  eventsAnchor=dayISO(cursor);renderEventsNew();
+ }
+});
+$('eventCreate').onclick=()=>openEditorNew('Evento');
+
 function renderListsNew(){
-  const active=items.filter(t=>t.status!=='concluida');
-  $('statOpen').textContent=items.filter(t=>t.status==='aberta').length;
-  $('statProgress').textContent=items.filter(t=>t.status==='andamento').length;
-  $('statUrgent').textContent=active.filter(t=>['Crítica','Urgente'].includes(t.priority)).length;
-  $('statDone').textContent=items.filter(t=>t.status==='concluida').length;
-  const filter=$('filter').value;
-  const names={ativas:'Pendentes e em Andamento',todas:'Todas as Atividades',aberta:'Em Aberto',andamento:'Em Andamento',urgentes:'Críticas / Urgentes',concluida:'Concluídas'};
-  document.querySelectorAll('[data-kpi]').forEach(b=>{const selected=b.dataset.kpi===filter;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected))});
-  $('filterSummary').innerHTML='Exibindo: '+esc(names[filter]||names.todas)+' <button type="button" class="link-btn" id="resetFilters">Limpar Filtro</button>';
-  $('resetFilters').onclick=()=>{$('filter').value='ativas';$('search').value='';renderListsNew()};
-  let shown=filter==='todas'?items:filter==='ativas'?active:filter==='urgentes'?active.filter(t=>['Crítica','Urgente'].includes(t.priority)):items.filter(t=>t.status===filter);
-  const query=$('search').value.toLocaleLowerCase('pt-BR');
-  shown=shown.filter(t=>[t.title,t.assignee,t.sector,t.details].some(x=>String(x||'').toLocaleLowerCase('pt-BR').includes(query)));
-  const rank={'Crítica':0,'Urgente':1,'Normal':2,'Baixa':3};
-  shown=[...shown].sort((a,b)=>(rank[a.priority]??9)-(rank[b.priority]??9)||String(a.dueAt||'9999').localeCompare(String(b.dueAt||'9999')));
-  $('taskList').innerHTML=shown.length?shown.map(summaryCard).join(''):'<div class="empty">Nenhuma Atividade Encontrada Neste Filtro.</div>';
-  const done=items.filter(t=>t.status==='concluida');
-  $('historyList').innerHTML=done.length?done.map(summaryCard).join(''):'<div class="empty">Nenhuma Atividade Concluída.</div>';
+ const executable=items.filter(t=>!isEventItem(t)),active=executable.filter(t=>t.status!=='concluida');
+ $('statOpen').textContent=executable.filter(t=>t.status==='aberta').length;
+ $('statProgress').textContent=executable.filter(t=>t.status==='andamento').length;
+ $('statUrgent').textContent=active.filter(t=>['Crítica','Urgente'].includes(t.priority)).length;
+ $('statDone').textContent=executable.filter(t=>t.status==='concluida').length;
+ const filter=$('filter').value,names={ativas:'Pendentes e em Andamento',todas:'Todas as Atividades',aberta:'Em Aberto',andamento:'Em Andamento',urgentes:'Críticas / Urgentes',concluida:'Concluídas'};
+ document.querySelectorAll('[data-kpi]').forEach(button=>{
+  const selected=button.dataset.kpi===filter;button.classList.toggle('selected',selected);button.setAttribute('aria-pressed',String(selected));
+ });
+ $('filterSummary').innerHTML='Exibindo: '+esc(names[filter]||names.todas)+' <button type="button" class="link-btn" id="resetFilters">Limpar Filtro</button>';
+ $('resetFilters').onclick=()=>{$('filter').value='ativas';$('search').value='';renderListsNew()};
+ let shown=filter==='todas'?executable:filter==='ativas'?active:filter==='urgentes'?active.filter(t=>['Crítica','Urgente'].includes(t.priority)):executable.filter(t=>t.status===filter);
+ const q=$('search').value.toLocaleLowerCase('pt-BR');
+ shown=shown.filter(t=>[t.title,t.assignee,t.sector,t.details].some(v=>String(v||'').toLocaleLowerCase('pt-BR').includes(q)));
+ const rank={'Crítica':0,'Urgente':1,'Normal':2,'Baixa':3};
+ shown=[...shown].sort((a,b)=>(rank[a.priority]??9)-(rank[b.priority]??9)||String(a.dueAt||'9999').localeCompare(String(b.dueAt||'9999')));
+ $('taskList').innerHTML=shown.length?shown.map(summaryCard).join(''):'<div class="empty">Nenhuma Atividade Encontrada Neste Filtro.</div>';
+ const done=executable.filter(t=>t.status==='concluida');
+ $('historyList').innerHTML=done.length?done.map(summaryCard).join(''):'<div class="empty">Nenhuma Atividade Concluída.</div>';
 }
 
-function renderAllNew(){renderListsNew();renderCalendarNew()}
+function renderAllNew(){renderListsNew();renderCalendarNew();renderEventsNew()}
 
 function openEditorNew(type,date){
   renderFormOptions();
@@ -433,7 +489,7 @@ function formatNoteTime(value){
 function noteLogRef(id){return collection(db,'tarefas',id,'atualizacoes')}
 function renderTaskNotes(){
   const task=items.find(t=>t.id===viewId);
-  const completed=task?.status==='concluida';
+  const completed=task?.status==='concluida'||isEventItem(task);
   $('taskNoteForm').hidden=!task||completed||isRecurring(task);
   $('noteCount').textContent=currentNotes.length+' '+(currentNotes.length===1?'Atualização':'Atualizações');
   const notes=[...currentNotes];
@@ -463,7 +519,7 @@ $('taskNoteForm').onsubmit=async event=>{
   event.preventDefault();
   if(!user||!viewId)return;
   const task=items.find(t=>t.id===viewId),texto=$('taskNoteText').value.trim();
-  if(!task||task.status==='concluida'||isRecurring(task)){toast('O Chamado Não Está Aberto para Novas Notas.');return}
+  if(!task||task.status==='concluida'||isEventItem(task)||isRecurring(task)){toast('O Chamado Não Está Aberto para Novas Notas.');return}
   if(!texto||texto.length>1500){toast('Informe Uma Nota de Até 1.500 Caracteres.');return}
   $('taskNoteSave').disabled=true;
   try{
@@ -481,7 +537,7 @@ function showDetailNew(id,occurrenceDate=''){
   const t=items.find(x=>x.id===id);if(!t)return;
   viewId=id;
   $('detailTitle').textContent=capWords(t.title);
-  const values=[['Tipo',t.type],['Status',stateLabel[t.status]||t.status],['Prioridade',t.priority],['Setor',t.sector],['Responsável',t.assignee||'Não Definido'],['Data e Horário',ptDate(occurrenceDate&&isRecurring(t)?occurrenceDate+String(t.dueAt).slice(10):t.dueAt)],...(isRecurring(t)?[['Repetição',recurrenceLabel(t)],['Fim da Repetição',t.recurrenceUntil?ptDate(t.recurrenceUntil):'Sem Data Final']]:[])];
+  const values=[['Tipo',t.type],['Status',isEventItem(t)?'Programado':stateLabel[t.status]||t.status],['Prioridade',t.priority],['Setor',t.sector],['Responsável',t.assignee||'Não Definido'],['Data e Horário',ptDate(occurrenceDate&&isRecurring(t)?occurrenceDate+String(t.dueAt).slice(10):t.dueAt)],...(isRecurring(t)?[['Repetição',recurrenceLabel(t)],['Fim da Repetição',t.recurrenceUntil?ptDate(t.recurrenceUntil):'Sem Data Final']]:[])];
   $('detailContent').innerHTML=(isRecurring(t)?'<p class="recurrence-explanation">↻ Atividade Recorrente. A Exclusão Remove Toda a Série.</p>':'')+'<div class="detail-grid">'+values.map(([a,b])=>'<div><strong>'+esc(a)+'</strong><span>'+esc(b)+'</span></div>').join('')+'</div><strong>Detalhes</strong><div class="detail-note">'+esc(t.details||'Sem Detalhes Adicionais.')+'</div>';
   if(t.status==='concluida'&&t.completedBy){
     $('detailContent').innerHTML+='<div class="call-original"><strong>Conclusão</strong><p>'+
@@ -580,7 +636,7 @@ $('taskForm').onsubmit = async function(event){
   if(role!=='admin'&&data.type==='Rotina'){toast('Apenas Administradores Podem Criar Rotinas.');return}
   $('saveTask').disabled=true;
   try{await addDoc(collection(db,'tarefas'),data);modal('editor',false);
-    if(date&&['Evento','Rotina'].includes(data.type)){const [y,m]=date.split('-').map(Number);selectedDay=date;monthCursor=new Date(y,m-1,1);document.querySelector('[data-page="agenda"]').click()}
+    if(date&&isEventItem(data)){eventsAnchor=date;document.querySelector('[data-page="eventos"]').click()}
     toast('Atividade Registrada com Sucesso.');
   }catch(error){console.error(error);toast('Falha ao Registrar: '+(error.code||error.message))}
   finally{$('saveTask').disabled=false}
@@ -590,7 +646,7 @@ $('completeForm').onsubmit = async (e) => {
   e.preventDefault();
   if (!pendingId || !user) return;
   const activeTask=items.find(t=>t.id===pendingId);
-  if(!activeTask||isRecurring(activeTask)||activeTask.status==='concluida')return;
+  if(!activeTask||isEventItem(activeTask)||isRecurring(activeTask)||activeTask.status==='concluida')return;
 
   const name = $('worker').value.trim();
   if (!name) return;
