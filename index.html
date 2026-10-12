@@ -4208,6 +4208,21 @@ section.page :is(.quality-card,.class-card,.embryo-card,.collect-card,.feed-card
 section.page > .synapse-page-notes{display:flex;flex-direction:column;gap:12px;margin-top:20px;padding-top:14px;border-top:1px solid var(--line)}
 section.page > .synapse-page-notes > *{margin:0!important;width:100%;box-sizing:border-box}
 </style>
+<style id="synapse-settings-style">
+.title h1{line-height:1;margin:0}
+.synapse-wordmark{display:block;width:240px;max-width:100%;height:auto}
+.title #subtitle{margin-top:12px}
+.main:has(#configuracoes.active) .topbar > .actions{display:none}
+.synapse-settings-heading{margin-bottom:20px}
+.synapse-settings-heading h2{margin:0 0 6px;font-size:24px;color:var(--green,#173629)}
+.synapse-settings-heading p,.synapse-settings-card p{color:#6e7d73;line-height:1.6;margin:0}
+.synapse-settings-card{padding:24px;background:#fff;border:1px solid var(--line);border-radius:16px;max-width:900px}
+.synapse-settings-card h3{margin:0 0 8px;font-size:18px;color:#173629}
+.synapse-settings-card .dashboard-data-controls{margin-top:24px;gap:10px}
+.synapse-settings-card .btn{min-height:42px}
+.synapse-settings-card .synapse-settings-note{margin-top:24px;padding-top:16px;border-top:1px solid var(--line);font-size:12px}
+@media(max-width:680px){.synapse-wordmark{width:210px}.synapse-settings-card{padding:18px}.synapse-settings-card .dashboard-data-status{flex-basis:100%;justify-content:center}}
+</style>
 </head>
 <body>
 <div class="app">
@@ -4251,23 +4266,16 @@ section.page > .synapse-page-notes > *{margin:0!important;width:100%;box-sizing:
   <path d="M12 20V9.8"/>
   <path d="M9.1 14.2c1 .2 1.9.7 2.9 1.7"/>
   <path d="M14.9 12.4c-1 .4-2 1.1-2.9 2.2"/>
-</svg></span><span class="nav-text">Nutrição</span></span></button><button data-page="climaThi" data-short="THI"><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M14 14.8V5.5a2.5 2.5 0 0 0-5 0v9.3a4.5 4.5 0 1 0 5 0Z"/><path d="M11.5 9v7"/><path d="M18 6h2"/><path d="M17.3 10.7l1.4 1.4"/><path d="M18 15h2"/></svg></span><span class="nav-text">Clima / THI</span></span></button></div>
+</svg></span><span class="nav-text">Nutrição</span></span></button><button data-page="climaThi" data-short="THI"><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M14 14.8V5.5a2.5 2.5 0 0 0-5 0v9.3a4.5 4.5 0 1 0 5 0Z"/><path d="M11.5 9v7"/><path d="M18 6h2"/><path d="M17.3 10.7l1.4 1.4"/><path d="M18 15h2"/></svg></span><span class="nav-text">Clima / THI</span></span></button><button type="button" data-page="configuracoes" data-short="Config."><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg></span><span class="nav-text">Configurações</span></span></button></div>
   </aside>
 
   <main class="main">
     <div class="topbar">
       <div class="title">
-        <h1 id="pageTitle">Synapse</h1>
+        <h1 id="pageTitle"><img class="synapse-wordmark" src="./icons/synapse-wordmark.png" alt="Synapse" width="600" height="73"></h1>
         <p id="subtitle"></p>
       </div>
       <div class="actions">
-        <div class="dashboard-data-controls">
-          <button id="dashboardSaveDataBtn" class="btn primary" type="button">Salvar dados</button>
-          <button id="dashboardBackupBtn" class="btn" type="button">Backup</button>
-          <label class="btn" for="dashboardRestoreInput">Restaurar</label>
-          <input id="dashboardRestoreInput" type="file" accept=".json,application/json" />
-          <span id="dashboardDataStatus" class="dashboard-data-status">Base do HTML</span>
-        </div>
         <select id="rangeSelect" class="select">
           <option value="6">6 períodos</option>
           <option value="12" selected>12 períodos</option>
@@ -6028,6 +6036,24 @@ section.page > .synapse-page-notes > *{margin:0!important;width:100%;box-sizing:
       </div>
       <div class="v235-note">A base atual contém um relatório de classificação. A evolução temporal entre datas será formada com novos relatórios; por enquanto esta guia compara lactações, famílias e pais usando a classificação disponível.</div>
     </section>
+    <section id="configuracoes" class="page" aria-labelledby="settingsTitle">
+      <div class="synapse-settings-heading">
+        <h2 id="settingsTitle">Configurações</h2>
+        <p>Gerencie o salvamento e as cópias de segurança dos seus dados.</p>
+      </div>
+      <div class="synapse-settings-card">
+        <h3>Dados e backup</h3>
+        <p>Salve os dados neste navegador, baixe uma cópia de segurança ou restaure um backup existente.</p>
+        <div class="dashboard-data-controls">
+          <button id="dashboardSaveDataBtn" class="btn primary" type="button">Salvar dados</button>
+          <button id="dashboardBackupBtn" class="btn" type="button">Backup</button>
+          <button id="dashboardRestoreBtn" class="btn" type="button">Restaurar</button>
+          <input id="dashboardRestoreInput" type="file" accept=".json,application/json" />
+          <span id="dashboardDataStatus" class="dashboard-data-status" role="status" aria-live="polite">Base do HTML</span>
+        </div>
+        <p class="synapse-settings-note">O backup em JSON permite guardar uma cópia dos dados e transferi-los para outro navegador ou dispositivo.</p>
+      </div>
+    </section>
 </main>
 </div>
 
@@ -7365,7 +7391,7 @@ async function classificationImport(file){
   if(!file)return;try{CLASS_DATA=await classificationParseXlsx(file);CLASS_SEARCH="";CLASS_LACT_FILTER="all";CLASS_CLASS_FILTER="all";CLASS_SORT={key:"pf",dir:"desc"};renderClassification();await dashboardSaveData({silent:true});toast(`Classificação atualizada: ${CLASS_DATA.rows.length} animais.`);}catch(err){console.error(err);toast(err?.message||"Não foi possível importar a classificação.");}
 }
 
-const pageTitles = {estoque:"Estoque",dietas:"Dietas",operacional:"Operacional",insights:"Insights",geral:"Visão Geral",producao:"Produção",qualidade:"Controle Leiteiro",reproducao:"Reprodução",rebanho:"Rebanho",individuais:"Previsão de Nascimentos",evolucaoRebanho:"Evolução do Rebanho",novilhas:"Novilhas",descartes:"Descartes",financeiro:"Financeiro",centroCustos:"Centro de Custos",mapaPagamento:"Mapa de Pagamento",genomica:"Visão Geral",classificacao:"Classificação",embriao:"OPU",acw:"Monitoramento ACW",climaThi:"Clima / THI",cultura:"Cultura",alimentacao:"Ácidos Graxos",benchmark:"Benchmark",planejamento:"Visão Geral",classificacaoEvolucao:"Evolução da Classificação",coleta:"Coleta"};
+const pageTitles = {configuracoes:"Configurações",estoque:"Estoque",dietas:"Dietas",operacional:"Operacional",insights:"Insights",geral:"Visão Geral",producao:"Produção",qualidade:"Controle Leiteiro",reproducao:"Reprodução",rebanho:"Rebanho",individuais:"Previsão de Nascimentos",evolucaoRebanho:"Evolução do Rebanho",novilhas:"Novilhas",descartes:"Descartes",financeiro:"Financeiro",centroCustos:"Centro de Custos",mapaPagamento:"Mapa de Pagamento",genomica:"Visão Geral",classificacao:"Classificação",embriao:"OPU",acw:"Monitoramento ACW",climaThi:"Clima / THI",cultura:"Cultura",alimentacao:"Ácidos Graxos",benchmark:"Benchmark",planejamento:"Visão Geral",classificacaoEvolucao:"Evolução da Classificação",coleta:"Coleta"};
 
 
 function indNorm(v){
@@ -14342,7 +14368,6 @@ document.querySelectorAll(":is(.nav,.synapse-subnav) button[data-page]").forEach
  document.querySelectorAll(":is(.nav,.synapse-subnav) button").forEach(x=>x.classList.remove("active")); b.classList.add("active");
  document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
  document.getElementById(b.dataset.page).classList.add("active");
- document.getElementById("pageTitle").textContent="Synapse";
  if(b.dataset.page==="individuais") requestAnimationFrame(renderIndividuals);
  if(b.dataset.page==="classificacao") requestAnimationFrame(renderClassification);
  if(b.dataset.page==="benchmark") requestAnimationFrame(renderBenchmark235);
@@ -15294,7 +15319,7 @@ function pageExportPdf(pageId){
 }
 
 
-const PAGE_EXPORT_ALL_EXCLUDED=new Set(["geral","financeiro","centroCustos","mapaPagamento"]);
+const PAGE_EXPORT_ALL_EXCLUDED=new Set(["geral","financeiro","centroCustos","mapaPagamento","configuracoes"]);
 
 function pageWaitPaint(){
   return new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
@@ -15433,7 +15458,6 @@ async function pageExportAllPdf(){
   const activePage=document.querySelector(".page.active");
   const activePageId=activePage?.id||"geral";
   const activeNav=document.querySelector(":is(.nav,.synapse-subnav) button[data-page].active");
-  const oldPageTitle=document.getElementById("pageTitle")?.textContent||"";
 
   const pages=Array.from(document.querySelectorAll("section.page"))
     .filter(page=>!PAGE_EXPORT_ALL_EXCLUDED.has(page.id));
@@ -15476,8 +15500,6 @@ async function pageExportAllPdf(){
     document.querySelectorAll(":is(.nav,.synapse-subnav) button").forEach(b=>b.classList.remove("active"));
     if(activeNav)activeNav.classList.add("active");
 
-    const titleEl=document.getElementById("pageTitle");
-    if(titleEl)titleEl.textContent=oldPageTitle;
 
     pageRenderForCombinedExport(activePageId);
     await pageWaitPaint();
@@ -15526,8 +15548,6 @@ async function pageExportAllPdf(){
     document.querySelectorAll(":is(.nav,.synapse-subnav) button").forEach(b=>b.classList.remove("active"));
     if(activeNav)activeNav.classList.add("active");
 
-    const titleEl=document.getElementById("pageTitle");
-    if(titleEl)titleEl.textContent=oldPageTitle;
 
     report?.remove();
     document.title=oldTitle;
@@ -15616,7 +15636,7 @@ function synapseArrangeSourceNotes(){
 }
 function installPageExportButtons(){
   document.querySelectorAll('section.page').forEach(page=>{
-    if(page.querySelector('.synapse-file-actions'))return;
+    if(page.id==='configuracoes'||page.querySelector('.synapse-file-actions'))return;
     let row=page.querySelector('.page-export-row');
     if(!row){row=document.createElement('div');row.className='page-export-row';page.prepend(row);}
     const group=document.createElement('div');group.className='synapse-file-actions';group.setAttribute('role','group');group.setAttribute('aria-label','Importação, exportação e impressão');
@@ -15701,6 +15721,7 @@ document.addEventListener("visibilitychange",()=>{
 });
 
 document.getElementById("rangeSelect").addEventListener("change",renderAll);
+document.getElementById("dashboardRestoreBtn").addEventListener("click",()=>document.getElementById("dashboardRestoreInput").click());
 
 
 document.getElementById("classificationFileInput").addEventListener("change",e=>{const f=e.target.files?.[0];if(f)classificationImport(f);e.target.value="";});
