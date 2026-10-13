@@ -4223,6 +4223,40 @@ section.page > .synapse-page-notes > *{margin:0!important;width:100%;box-sizing:
 .synapse-settings-card .synapse-settings-note{margin-top:24px;padding-top:16px;border-top:1px solid var(--line);font-size:12px}
 @media(max-width:680px){.synapse-wordmark{width:210px}.synapse-settings-card{padding:18px}.synapse-settings-card .dashboard-data-status{flex-basis:100%;justify-content:center}}
 </style>
+<style id="synapse-mobile-navigation-charts">
+@media screen and (max-width:820px){
+  .sidebar{position:sticky!important;top:0!important;z-index:60;height:auto!important;max-height:none!important;display:flex!important;flex-direction:row!important;align-items:center;gap:10px;padding:8px 10px;overflow:hidden!important}
+  .sidebar .logoWrap{flex:0 0 54px!important;width:54px;margin:0;align-self:center}
+  .sidebar .logoImage{width:54px;max-width:54px;height:44px;object-fit:contain;filter:none}
+  .sidebar .nav{flex:1 1 0!important;min-width:0;display:flex!important;flex-direction:row!important;align-items:center;gap:6px;overflow-x:auto!important;overflow-y:hidden!important;padding:0;scrollbar-width:none;overscroll-behavior-x:contain}
+  .sidebar .nav::-webkit-scrollbar{display:none}
+  .sidebar .nav button,.synapse-subnav button{box-sizing:border-box;flex:0 0 44px!important;width:44px;height:44px;min-width:44px;padding:0;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.12);border-radius:10px}
+  .sidebar .nav button{color:#fff}
+  .sidebar .nav button.active{background:rgba(216,187,103,.2);border-color:#d8bb67}
+  .sidebar .nav button:before{display:none!important}
+  .sidebar .nav .nav-text,.synapse-subnav .nav-text{display:none!important}
+  .sidebar .nav .nav-item,.synapse-subnav .nav-item{justify-content:center;gap:0}
+  .sidebar .nav .nav-icon,.synapse-subnav .nav-icon{width:23px;height:23px;min-width:23px;flex:0 0 23px}
+  .sidebar .nav .nav-icon svg,.synapse-subnav .nav-icon svg{width:23px;height:23px}
+  .synapse-subnav-items{flex-wrap:nowrap;overflow-x:auto;gap:8px;padding-bottom:2px}
+  .synapse-subnav button{border-color:var(--line)}
+  .synapse-subnav button.active{border-color:var(--nav)}
+  .synapse-subnav{margin-bottom:16px}
+  .sidebar button:focus-visible,.synapse-subnav button:focus-visible{outline:2px solid #d8bb67;outline-offset:-3px}
+  #genomica .gen-layout{grid-template-columns:minmax(0,1fr)}
+  #genomica .gen-left,#genomica .gen-right,#genomica .gen-card{min-width:0;max-width:100%}
+  #genDistChart{aspect-ratio:auto;min-height:0;padding:10px 4px 0;overflow:visible}
+  #genDistChart .gen-dist-svg{width:100%;min-width:0;overflow:hidden}
+  #genDistChart .gen-dist-svg svg{min-width:0;width:100%;height:auto;overflow:visible}
+  #genDistLegend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 10px}
+  #genDistLegend .gen-dist-mean{display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:0;padding:9px;border:1px solid #eee5cf;background:#fffaf0;border-radius:10px}
+  #genDistLegend .gen-dist-mean-label{display:flex;align-items:center;gap:5px;padding:0;border:0;background:none;font-size:11px}
+  #genDistLegend .gen-dist-mean-label i{width:14px;flex:0 0 14px}
+  #genDistLegend .gen-dist-mean strong{font-size:14px;color:#173629}
+  #genDistLegend .gen-dist-mean small{font-size:10px;color:#6e7d73}
+  #genDistMeta{margin:8px 10px 12px}
+}
+</style>
 </head>
 <body>
 <div class="app">
@@ -6171,6 +6205,11 @@ section.page > .synapse-page-notes > *{margin:0!important;width:100%;box-sizing:
 <div id="tooltip" class="tooltip"></div>
 
 <script>
+// Os rótulos continuam acessíveis quando o menu mostra apenas os ícones.
+document.querySelectorAll(':is(.nav,.synapse-subnav) button').forEach(button=>{
+  const label=button.querySelector('.nav-text')?.textContent.trim();
+  if(label){button.setAttribute('aria-label',label);button.title=label;}
+});
 const SYNAPSE_NAV_GROUPS={"insights": ["producao", "reproducao", "rebanho", "novilhas", "descartes"], "financeiro": ["centroCustos", "mapaPagamento"], "genetica": ["genomica", "classificacao", "classificacaoEvolucao"], "embrioes": ["embriao", "estoque"], "qualidades": ["qualidade", "cultura"], "nutricao": ["alimentacao", "dietas", "operacional"], "planejamentoRebanho": ["planejamento", "individuais", "evolucaoRebanho"]};
 const SYNAPSE_LAST_SUBPAGE={};
 function synapseSyncNavigation(page){
@@ -10519,8 +10558,9 @@ function renderGenDistributionChart(){
   min-=rangePad;
   max+=rangePad;
 
-  const width=1180, height=455;
-  const padBox={l:58,r:38,t:104,b:58};
+  const compact=window.matchMedia('(max-width:820px)').matches;
+  const width=compact?Math.max(240,el.clientWidth-8):1180, height=compact?290:455;
+  const padBox=compact?{l:35,r:35,t:18,b:50}:{l:58,r:38,t:104,b:58};
   const plotW=width-padBox.l-padBox.r;
   const plotH=height-padBox.t-padBox.b;
   const maxY=Math.max(...groups.map(g=>normalPdf(g.mean,g.mean,g.sd)),0.0001);
@@ -10528,7 +10568,7 @@ function renderGenDistributionChart(){
   const yScale=y=>padBox.t+plotH-(y/maxY)*plotH;
   const decimals=genTraitDecimals(trait);
   const steps=140;
-  const xTicks=6;
+  const xTicks=compact?3:6;
 
   const fmtTrait=v=>Number(v).toLocaleString("pt-BR",{
     minimumFractionDigits:decimals,
@@ -10537,9 +10577,12 @@ function renderGenDistributionChart(){
 
   let svg=`<rect x="0" y="0" width="${width}" height="${height}" rx="12" fill="#fffefb"/>`;
 
-  // Faixa superior destinada exclusivamente às informações das médias.
+  // No celular, as médias são exibidas em cartões abaixo da curva.
+  if(!compact){
   svg+=`<rect x="${padBox.l}" y="12" width="${plotW}" height="72" rx="10" fill="#fbf6e8" stroke="#eadfbe"/>`;
   svg+=`<text x="${padBox.l+12}" y="32" font-size="10" font-weight="800" fill="#8b6b1f">MÉDIAS POR GERAÇÃO</text>`;
+
+  }
 
   // Grade do gráfico.
   for(let i=0;i<=xTicks;i++){
@@ -10601,21 +10644,25 @@ function renderGenDistributionChart(){
 
     // Guia da média continua até o pico, mas fica mais discreta.
     svg+=`<line x1="${g.mx}" y1="${padBox.t+plotH}" x2="${g.mx}" y2="${g.my+5}" stroke="${g.color}" stroke-width="1.35" stroke-dasharray="5 5" opacity=".78"/>`;
-    svg+=`<line x1="${g.cx}" y1="${connectorY}" x2="${g.mx}" y2="${g.my-7}" stroke="${g.color}" stroke-width="1.1" opacity=".55"/>`;
+    if(!compact)svg+=`<line x1="${g.cx}" y1="${connectorY}" x2="${g.mx}" y2="${g.my-7}" stroke="${g.color}" stroke-width="1.1" opacity=".55"/>`;
     svg+=`<circle cx="${g.mx}" cy="${g.my}" r="5" fill="${g.color}" stroke="#fff" stroke-width="1.5"/>`;
 
+    if(!compact){
     svg+=`<rect x="${cardX}" y="${cardY}" width="${cardW}" height="${cardH}" rx="7" fill="#fffdf7" stroke="${g.color}" stroke-width="1.35"/>`;
     svg+=`<rect x="${cardX}" y="${cardY}" width="5" height="${cardH}" rx="3" fill="${g.color}"/>`;
     svg+=`<text x="${cardX+13}" y="${cardY+12}" font-size="9" font-weight="800" fill="#6b6453">${esc(g.group)} • n=${g.count.toLocaleString("pt-BR")}</text>`;
     svg+=`<text x="${cardX+13}" y="${cardY+24}" font-size="11.5" font-weight="900" fill="${g.color}">média ${fmtTrait(g.mean)}</text>`;
+    }
   });
 
   svg+=`<text x="${width/2}" y="${height-4}" text-anchor="middle" font-size="11.5" font-weight="700" fill="#625f55">${esc(genTraitLabel(trait))}</text>`;
 
-  el.innerHTML=`<div class="gen-dist-svg"><svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet">${svg}</svg></div>`;
+  el.innerHTML=`<div class="gen-dist-svg"><svg role="img" aria-label="Distribuição por geração: ${esc(genTraitLabel(trait))}" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet">${svg}</svg></div>`;
 
   if(legend){
-    legend.innerHTML=groups.map(g=>`<span><i style="background:${g.color}"></i>${esc(g.group)} <strong>n=${g.count.toLocaleString("pt-BR")}</strong></span>`).join('');
+    legend.innerHTML=compact
+      ?groups.map(g=>`<div class="gen-dist-mean"><span class="gen-dist-mean-label"><i style="background:${g.color}"></i>${esc(g.group)}</span><strong>Média ${fmtTrait(g.mean)}</strong><small>${g.count.toLocaleString("pt-BR")} animais</small></div>`).join('')
+      :groups.map(g=>`<span><i style="background:${g.color}"></i>${esc(g.group)} <strong>n=${g.count.toLocaleString("pt-BR")}</strong></span>`).join('');
   }
   if(meta){
     meta.innerHTML=`Característica: <strong>${esc(genTraitLabel(trait))}</strong> • ${allValues.length.toLocaleString("pt-BR")} valores válidos • linhas tracejadas indicam a média genética de cada geração.`;
@@ -15799,6 +15846,7 @@ window.addEventListener("resize",()=>{
   clearTimeout(window.__r);
   window.__r=setTimeout(()=>{
     renderAll();
+    if(document.getElementById("genomica")?.classList.contains("active")) renderGenDistributionChart();
     if(document.getElementById("metricModalBackdrop").classList.contains("open") && METRIC_MODAL_STATE.metricName){
       const mm=metric(METRIC_MODAL_STATE.metricName);
       if(mm) drawMetricModalChart(mm,METRIC_MODAL_STATE.sectionId);
@@ -16170,6 +16218,7 @@ dashboardBootstrap();
 function rerenderActivePage(){
   try{
     renderAll();
+    if(document.getElementById("genomica")?.classList.contains("active")) renderGenDistributionChart();
     if(document.getElementById("embriao")?.classList.contains("active")) renderEmbryo();
     if(document.getElementById("cultura")?.classList.contains("active")) renderCulture();
     if(document.getElementById("qualidade")?.classList.contains("active")) renderQuality();
