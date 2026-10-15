@@ -422,8 +422,8 @@ service cloud.firestore {
         allow delete: if admin();
       }
     }
-    // Lista Permanente de Compras: criação, edição e compra por usuários ativos.
-    // Exclusão permanente somente por administradores.
+    // Lista Permanente de Compras: criação, edição, compra e exclusão por usuários ativos.
+    // Pedidos gerados são documentos históricos imutáveis e possuem contador sequencial.
     // Catálogo: operadores consultam; apenas administradores criam e alteram.
     match /catalogoProdutos/{catalogId} {
       allow read: if active();
@@ -532,7 +532,51 @@ service cloud.firestore {
           (request.resource.data.comprado == false
             && request.resource.data.compradoEm == null)
         );
-      allow delete: if admin();
+      allow delete: if active();
+    }
+    // Contador transacional para evitar duplicidade de números entre usuários.
+    match /contadores/{contadorId} {
+      allow get: if contadorId == 'pedidosCompra' && active();
+      allow list: if false;
+      allow create: if contadorId == 'pedidosCompra' && active()
+        && request.resource.data.keys().hasOnly(['numero','updatedAt','updatedByUid'])
+        && request.resource.data.keys().hasAll(['numero','updatedAt','updatedByUid'])
+        && request.resource.data.numero == 1
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.updatedByUid == request.auth.uid
+        && existsAfter(/databases/$(database)/documents/pedidosCompra/1);
+      allow update: if contadorId == 'pedidosCompra' && active()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['numero','updatedAt','updatedByUid'])
+        && request.resource.data.numero is int
+        && request.resource.data.numero == resource.data.numero + 1
+        && request.resource.data.numero <= 999999
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.updatedByUid == request.auth.uid
+        && !exists(/databases/$(database)/documents/pedidosCompra/$(string(request.resource.data.numero)))
+        && existsAfter(/databases/$(database)/documents/pedidosCompra/$(string(request.resource.data.numero)));
+      allow delete: if false;
+    }
+    // Cestas de compras salvas como pedidos imutáveis.
+    match /pedidosCompra/{pedidoId} {
+      allow read: if active();
+      allow create: if active()
+        && request.resource.data.keys().hasOnly(['numero','itens','createdAt','createdByUid','createdByName'])
+        && request.resource.data.keys().hasAll(['numero','itens','createdAt','createdByUid','createdByName'])
+        && request.resource.data.numero is int
+        && request.resource.data.numero >= 1
+        && request.resource.data.numero <= 999999
+        && pedidoId == string(request.resource.data.numero)
+        && request.resource.data.itens is list
+        && request.resource.data.itens.size() >= 1
+        && request.resource.data.itens.size() <= 60
+        && request.resource.data.createdByUid == request.auth.uid
+        && request.resource.data.createdByName is string
+        && request.resource.data.createdByName.size() >= 1
+        && request.resource.data.createdByName.size() <= 80
+        && request.resource.data.createdAt == request.time
+        && getAfter(/databases/$(database)/documents/contadores/pedidosCompra).data.numero
+          == request.resource.data.numero;
+      allow update, delete: if false;
     }
     match /auditoria/{logId} {
       allow read: if active();
