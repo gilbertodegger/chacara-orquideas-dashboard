@@ -663,6 +663,35 @@ main{padding:18px 20px 26px}
 @media(max-width:760px){.catalog-admin-row{grid-template-columns:minmax(0,1fr) auto}.catalog-admin-actions{grid-column:1/-1}.catalog-form-controls .btn{flex:1}.purchase-item{grid-template-columns:25px minmax(0,1fr)}.purchase-right{grid-column:2;align-items:flex-start}.purchase-authors{text-align:left;max-width:100%}}
 
 
+/* Compras: seleção em cesta, cópia para WhatsApp e pedidos numerados. */
+.purchase-share-toolbar{display:flex;flex-wrap:wrap;gap:9px;margin:0 0 14px}
+.purchase-share-toolbar .btn{font-size:13px;min-height:42px}
+.purchase-basket-panel,.purchase-orders-history{background:#fff;border:1px solid #d9e4d8;border-radius:14px;padding:15px;margin:0 0 18px}
+.purchase-basket-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:11px}
+.purchase-basket-head h3,.purchase-orders-head h3{font-size:17px;color:#254b38;margin:0 0 4px}
+.purchase-basket-head h3 span{font-size:12px;color:#fff;background:#236347;border-radius:20px;padding:3px 7px}
+.purchase-basket-head p,.purchase-orders-head p{margin:0;color:#6c8170;font-size:12px;line-height:1.5}
+.purchase-basket-head .btn{font-size:12px;padding:9px 11px}
+.purchase-basket-items{display:flex;flex-wrap:wrap;gap:7px;min-height:32px}
+.purchase-basket-chip{display:inline-flex;align-items:center;gap:6px;padding:7px 9px;background:#eef5ec;color:#24533a;border:1px solid #d7e6d4;border-radius:9px;font-size:12px;font-weight:650}
+.purchase-basket-chip small{color:#5d7a67;font-weight:500}
+.purchase-basket-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.purchase-basket-actions .btn{min-height:42px}
+.purchase-basket-note{font-size:12px;color:#32694c;line-height:1.5}
+.purchase-basket-toggle{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#2b5e43;white-space:nowrap;padding:7px 8px;border-radius:9px;background:#f3f8f2;border:1px solid #d5e4d4;cursor:pointer}
+.purchase-basket-toggle input{width:18px;height:18px;accent-color:#1b6044;cursor:pointer;margin:0}
+.purchase-orders-history{margin:18px 0 0}
+.purchase-orders-head{margin-bottom:12px}
+.purchase-orders-list{display:grid;gap:9px}
+.purchase-order-card{border:1px solid #dfe8dc;border-radius:11px;background:#fcfdfb;padding:12px}
+.purchase-order-card>summary{cursor:pointer;font-weight:750;color:#24533b;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.purchase-order-card>summary small{color:#65806e;font-size:11px;font-weight:550}
+.purchase-order-details{padding-top:12px;margin-top:10px;border-top:1px solid #e2eae0}
+.purchase-order-details ol{margin:0 0 12px;padding-left:22px}
+.purchase-order-details li{padding:4px 0;font-size:13px;overflow-wrap:anywhere}
+.purchase-order-copy{min-height:38px;font-size:12px!important}
+@media(max-width:700px){.purchase-share-toolbar .btn{flex:1;min-width:0}.purchase-basket-panel,.purchase-orders-history{padding:12px}.purchase-basket-actions .btn{flex:1}.purchase-order-card>summary{flex-direction:column;gap:3px}}
+
 /* Icones vetoriais do menu: branco uniforme e leitura adaptada a celulares pequenos. */
 .app>aside .nav button{display:flex;align-items:center;gap:11px;min-height:48px;padding:10px 12px;text-align:left}
 .app>aside .nav .ops-nav-icon{display:block;flex-shrink:0;width:25px;height:25px;min-width:25px;fill:none;stroke:#fff;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
@@ -809,10 +838,23 @@ main{padding:18px 20px 26px}
  <div class="purchase-form-buttons"><button id="purchaseSubmit" class="btn" type="submit">+ Adicionar Produto</button><button id="purchaseCancel" class="btn secondary" type="button" hidden>Cancelar Edição</button></div>
 </form>
 <p class="muted" id="purchaseNoAccess" hidden>Faça Login para Acessar a Lista de Compras.</p>
+<div class="purchase-share-toolbar">
+ <button type="button" class="btn secondary" id="purchaseCopyPending">Copiar Lista para WhatsApp</button>
+ <button type="button" class="btn secondary" id="purchaseSelectAll">Selecionar Pendentes para a Cesta</button>
+</div>
+<section class="purchase-basket-panel" aria-labelledby="purchaseBasketTitle">
+ <div class="purchase-basket-head"><div><h3 id="purchaseBasketTitle">Cesta de Pedidos <span id="purchaseBasketCount">0</span></h3><p>Marque “Cesta” nos produtos desejados para gerar um pedido numerado.</p></div><button class="btn secondary" id="purchaseBasketClear" type="button">Limpar Cesta</button></div>
+ <div id="purchaseBasketItems" class="purchase-basket-items"><p class="purchase-empty">Nenhum Produto Selecionado.</p></div>
+ <div class="purchase-basket-actions"><button type="button" class="btn" id="purchaseGenerateOrder">Gerar e Salvar Pedido</button><span class="purchase-basket-note" id="purchaseOrderMessage" role="status" aria-live="polite"></span></div>
+</section>
 <div class="purchase-list-heading"><h3>Produtos da Lista</h3>
 <label class="purchase-hide-label"><input type="checkbox" id="purchaseHideBought"/> Ocultar Comprados</label>
 <span>Marque ou Desmarque a Caixa para Atualizar a Compra.</span></div>
 <div id="purchaseList" class="purchase-list"></div>
+<section class="purchase-orders-history" aria-labelledby="purchaseOrdersTitle">
+ <div class="purchase-orders-head"><h3 id="purchaseOrdersTitle">Pedidos Gerados</h3><p>Pedidos Numerados Salvos no Firebase. Os Produtos e Quantidades Ficam Preservados no Histórico.</p></div>
+ <div id="purchaseOrdersList" class="purchase-orders-list" aria-live="polite"><p class="purchase-empty">Carregando Pedidos...</p></div>
+</section>
 </section>
 <section class="section" id="historico">
 <h2>Atividades Concluídas</h2>
