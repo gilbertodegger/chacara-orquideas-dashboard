@@ -63,6 +63,119 @@ function renderPurchases(){
  el('purchaseCatalogOpen').disabled=!user;
  renderBasket();
 }
+
+function pendingItems(){return items.filter(item=>item.comprado!==true).sort(byName)}
+function selectedItems(){return pendingItems().filter(item=>basketSelection.has(item.id))}
+const orderLabel=number=>String(number).padStart(6,'0');
+function formatWhatsApp(itemsToSend,number=null){
+ const lines=itemsToSend.map((item,index)=>(index+1)+'. '+upper(item.produto)+' — '+upper(item.quantidade));
+ const title=number===null?'*LISTA DE COMPRAS*':'*PEDIDO DE COMPRAS Nº '+orderLabel(number)+'*';
+ return '*CHÁCARA DAS ORQUÍDEAS*\n'+title+'\n\n'+lines.join('\n');
+}
+async function copyWhatsApp(text){
+ if(navigator.clipboard?.writeText){
+  try{await navigator.clipboard.writeText(text);return true}catch(error){console.warn('Clipboard:',error)}
+ }
+ const area=document.createElement('textarea');
+ area.value=text;area.readOnly=true;area.setAttribute('aria-hidden','true');
+ area.style.cssText='position:fixed;top:0;left:-9999px;opacity:0';
+ document.body.append(area);
+ area.select();
+ let copied=false;
+ try{copied=document.execCommand('copy')}catch(error){console.warn('Cópia alternativa:',error)}
+ area.remove();
+ return copied;
+}
+function renderBasket(){
+ const chosen=selectedItems(),count=chosen.length;
+ el('purchaseBasketCount').textContent=String(count);
+ el('purchaseBasketItems').innerHTML=count?chosen.map(item=>
+  '<span class="purchase-basket-chip">'+safe(upper(item.produto))+
+  ' <small>· '+safe(upper(item.quantidade))+'</small></span>'
+ ).join(''):'<p class="purchase-empty">Nenhum Produto Selecionado. Marque Cesta ao lado dos itens pendentes.</p>';
+ el('purchaseGenerateOrder').disabled=!user||orderSaving||!count;
+ el('purchaseBasketClear').disabled=!user||orderSaving||!count;
+ el('purchaseSelectAll').disabled=!user||orderSaving||!pendingItems().length;
+ el('purchaseCopyPending').disabled=!user||!pendingItems().length;
+}
+function renderOrders(){
+ const list=el('purchaseOrdersList');
+ if(!user){list.innerHTML='<p class="purchase-empty">Entre no Sistema para Consultar Pedidos.</p>';return}
+ list.innerHTML=orders.length?[...orders].sort((a,b)=>Number(b.numero)-Number(a.numero)).map(order=>{
+  const date=order.createdAt?.toDate?.()?.toLocaleString('pt-BR')||'Salvo Recentemente';
+  const number=orderLabel(order.numero),rows=Array.isArray(order.itens)?order.itens:[];
+  return '<details class="purchase-order-card"><summary><span>Pedido nº '+safe(number)+
+   '</span><small>'+safe(date)+' · '+rows.length+' Itens · '+safe(upper(order.createdByName||'Usuário'))+'</small></summary>'+
+   '<div class="purchase-order-details"><ol>'+rows.map(item=>'<li><strong>'+safe(upper(item.produto))+
+   '</strong> — '+safe(upper(item.quantidade))+'</li>').join('')+'</ol>'+
+   '<button type="button" class="btn purchase-order-copy" data-copy-order="'+safe(order.id)+'">Copiar Pedido para WhatsApp</button></div></details>';
+ }).join(''):'<p class="purchase-empty">Nenhum Pedido Gerado Ainda. Selecione Itens na Cesta e Salve o Primeiro Pedido.</p>';
+}
+el('purchaseCopyPending').addEventListener('click',async()=>{
+ const pending=pendingItems();
+ if(!user||!pending.length)return;
+ const copied=await copyWhatsApp(formatWhatsApp(pending));
+ message(copied?'Lista Copiada. Cole a Mensagem no WhatsApp.':'Não Foi Possível Copiar Automaticamente. Verifique as Permissões do Navegador.',!copied);
+});
+el('purchaseSelectAll').addEventListener('click',()=>{
+ if(!user||orderSaving)return;
+ const pending=pendingItems();
+ if(pending.length>60)return message('Cada Pedido Aceita Até 60 Produtos. Selecione os Desejados Individualmente.',true);
+ basketSelection.clear();
+ pending.forEach(item=>basketSelection.add(item.id));
+ renderPurchases();
+});
+el('purchaseBasketClear').addEventListener('click',()=>{
+ if(!user||orderSaving)return;
+ basketSelection.clear();renderPurchases();
+});
+el('purchaseGenerateOrder').addEventListener('click',async()=>{
+ if(!user||orderSaving)return;
+ const chosen=selectedItems();
+ if(!chosen.length)return message('Selecione ao Menos um Produto para a Cesta.',true);
+ if(chosen.length>60)return message('O Pedido Pode Conter Até 60 Itens.',true);
+ const ids=chosen.map(item=>item.id),uid=user.uid,name=userName;
+ if(!confirm('Gerar e Salvar um Pedido com '+chosen.length+' '+(chosen.length===1?'Produto':'Produtos')+'? A Lista Original Será Mantida.'))return;
+ orderSaving=true;renderBasket();el('purchaseOrderMessage').textContent='Salvando Pedido no Firebase...';
+ try{
+  let generated=null;
+  await runTransaction(db,async transaction=>{
+   const counter=await transaction.get(orderCounterRef);
+   // Revalida os itens contra o Firestore para não incluir compras já concluídas.
+   const snapshots=[];
+   for(const id of ids)snapshots.push(await transaction.get(doc(db,'compras',id)));
+   if(snapshots.some(snap=>!snap.exists()||snap.data().comprado===true))
+    throw new Error('Um Produto Mudou ou Foi Removido. Atualize a Cesta e Tente Novamente.');
+   const num=counter.exists()?Number(counter.data().numero)+1:1;
+   if(!Number.isSafeInteger(num)||num<1||num>999999)throw new Error('Numeração de Pedidos Inválida ou Esgotada.');
+   const ref=doc(db,'pedidosCompra',String(num));
+   if((await transaction.get(ref)).exists())throw new Error('Número de Pedido Já Existe. Contate o Administrador.');
+   const savedItems=snapshots.map(snap=>({
+    purchaseId:snap.id,produto:upper(snap.data().produto),quantidade:upper(snap.data().quantidade)
+   })).sort(byName);
+   transaction.set(orderCounterRef,{numero:num,updatedAt:serverTimestamp(),updatedByUid:uid});
+   transaction.set(ref,{numero:num,itens:savedItems,createdAt:serverTimestamp(),createdByUid:uid,createdByName:name});
+   generated=num;
+  });
+  basketSelection.clear();renderPurchases();
+  el('purchaseOrderMessage').textContent='Pedido nº '+orderLabel(generated)+' Salvo. Abra o Histórico e Clique em Copiar Pedido para WhatsApp.';
+  message('Pedido nº '+orderLabel(generated)+' Gerado e Salvo.');
+ }catch(error){
+  console.error('Gerar pedido:',error);
+  el('purchaseOrderMessage').textContent=error.code==='permission-denied'?
+   'Para Salvar Pedidos, Publique as Novas Regras do Firestore.':
+   'Não Foi Possível Gerar o Pedido: '+(error.message||error.code);
+ }finally{orderSaving=false;renderBasket()}
+});
+el('purchaseOrdersList').addEventListener('click',async event=>{
+ const copy=event.target.closest('[data-copy-order]');
+ if(!copy||!user)return;
+ const order=orders.find(item=>item.id===copy.dataset.copyOrder);
+ if(!order||!Array.isArray(order.itens)||!order.itens.length)return;
+ const copied=await copyWhatsApp(formatWhatsApp(order.itens,order.numero));
+ message(copied?'Pedido nº '+orderLabel(order.numero)+' Copiado. Cole no WhatsApp.':'Não Foi Possível Copiar o Pedido.',!copied);
+});
+
 function renderCatalogAdmin(){
  el('catalogAdminSection').hidden=role!=='admin'||!user;
  if(role!=='admin')return;
