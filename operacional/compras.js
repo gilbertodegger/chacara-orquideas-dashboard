@@ -1,15 +1,18 @@
 import {getApps,getApp,initializeApp} from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js';
 import {getAuth,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js';
-import {getFirestore,collection,doc,getDoc,addDoc,updateDoc,deleteDoc,onSnapshot,serverTimestamp} from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
+import {getFirestore,collection,doc,getDoc,addDoc,updateDoc,deleteDoc,onSnapshot,serverTimestamp,runTransaction} from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
 // Lista compartilhada, sem data ou prazo, salva em /compras.
 const el=id=>document.getElementById(id);
 const app=getApps().length?getApp():initializeApp(window.CHACARA_FIREBASE_CONFIG);
 const auth=getAuth(app),db=getFirestore(app);
 const purchasesRef=collection(db,'compras'),catalogRef=collection(db,'catalogoProdutos');
+const ordersRef=collection(db,'pedidosCompra'),orderCounterRef=doc(db,'contadores','pedidosCompra');
 const upper=s=>String(s??'').trim().toLocaleUpperCase('pt-BR');
 const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const byName=(a,b)=>upper(a.produto||a.nome).localeCompare(upper(b.produto||b.nome),'pt-BR');
-let user=null,role='operator',userName='',items=[],catalog=[],stopPurchases=null,stopCatalog=null;
+let user=null,role='operator',userName='',items=[],catalog=[],orders=[],stopPurchases=null,stopCatalog=null,stopOrders=null;
+const basketSelection=new Set();
+let orderSaving=false;
 let editing='',editingCatalog='',hiddenBought=false,busy=new Set(),catalogBusy=false,authEpoch=0;
 function message(s,error=false){el('purchaseMessage').textContent=s;el('purchaseMessage').classList.toggle('purchase-error',error)}
 function catalogMessage(s,error=false){el('catalogMessage').textContent=s;el('catalogMessage').classList.toggle('purchase-error',error)}
@@ -38,6 +41,8 @@ function uppercaseInput(input){
 for(const id of ['purchaseProduct','purchaseQuantity','catalogName'])el(id).addEventListener('input',e=>uppercaseInput(e.target));
 function renderPurchases(){
  const pending=items.filter(x=>x.comprado!==true).sort(byName),bought=items.filter(x=>x.comprado===true).sort(byName);
+ const pendingIds=new Set(pending.map(item=>item.id));
+ for(const id of basketSelection)if(!pendingIds.has(id))basketSelection.delete(id);
  el('agendaPurchaseCount').textContent=String(pending.length);
  el('purchaseHideBought').checked=hiddenBought;
  const shown=hiddenBought?pending:[...pending,...bought];
@@ -46,14 +51,17 @@ function renderPurchases(){
   return '<article class="purchase-item '+(checked?'is-bought':'')+'">'+
    '<label class="purchase-check"><input type="checkbox" data-purchase-check="'+safe(item.id)+'" '+(checked?'checked ':'')+(locked?'disabled ':'')+'aria-label="Marcar ou Desmarcar '+safe(upper(item.produto))+'"/></label>'+
    '<div class="purchase-content"><strong class="purchase-product">'+safe(upper(item.produto))+'</strong><span class="purchase-quantity">QUANTIDADE: '+safe(upper(item.quantidade))+'</span></div>'+
-   '<div class="purchase-right"><div class="purchase-controls"><button type="button" class="btn secondary" data-purchase-edit="'+safe(item.id)+'" '+(locked?'disabled':'')+'>Editar</button>'+
-   (role==='admin'?'<button type="button" class="btn secondary purchase-remove" data-purchase-delete="'+safe(item.id)+'" '+(locked?'disabled':'')+' title="Excluir Produto">×</button>':'')+'</div>'+
+   '<div class="purchase-right"><div class="purchase-controls">'+
+    (!checked?'<label class="purchase-basket-toggle"><input type="checkbox" data-basket-select="'+safe(item.id)+'" '+(basketSelection.has(item.id)?'checked ':'')+(locked?'disabled ':'')+'aria-label="Incluir '+safe(upper(item.produto))+' na cesta"/> Cesta</label>':'')+
+    '<button type="button" class="btn secondary" data-purchase-edit="'+safe(item.id)+'" '+(locked?'disabled':'')+'>Editar</button>'+
+   '<button type="button" class="btn secondary purchase-remove" data-purchase-delete="'+safe(item.id)+'" '+(locked?'disabled':'')+' title="Excluir Produto" aria-label="Excluir '+safe(upper(item.produto))+'">×</button></div>'+
    '<div class="purchase-authors"><span>ADICIONADO POR: <strong>'+safe(upper(authorName(item)))+'</strong></span>'+
    '<span>CONCLUÍDO POR: <strong>'+safe(upper(finisherName(item)))+'</strong></span></div></div></article>';
  }).join(''):'<div class="purchase-empty">'+(hiddenBought&&items.length?'Nenhuma Compra Pendente. Desmarque Ocultar Comprados para Ver os Itens Comprados.':'Nenhum Produto na Lista. Adicione o Primeiro Item Acima.')+'</div>';
  el('agendaPurchaseList').innerHTML=pending.length?pending.map(item=>'<div class="purchase-agenda-item"><span class="purchase-agenda-dot"></span><strong>'+safe(upper(item.produto))+'</strong><span>'+safe(upper(item.quantidade))+'</span></div>').join(''):'<div class="purchase-agenda-empty">Nenhuma Compra Pendente.</div>';
  el('purchaseForm').hidden=!user;el('purchaseNoAccess').hidden=!!user;
  el('purchaseCatalogOpen').disabled=!user;
+ renderBasket();
 }
 function renderCatalogAdmin(){
  el('catalogAdminSection').hidden=role!=='admin'||!user;
@@ -83,8 +91,10 @@ function closeCatalog(){el('purchaseCatalogModal').classList.remove('show')}
 function disconnect(){
  if(stopPurchases){stopPurchases();stopPurchases=null}
  if(stopCatalog){stopCatalog();stopCatalog=null}
- user=null;role='operator';userName='';items=[];catalog=[];busy.clear();catalogBusy=false;hiddenBought=false;
- resetForm();resetCatalogForm();closeCatalog();renderPurchases();renderCatalogAdmin();
+ if(stopOrders){stopOrders();stopOrders=null}
+ user=null;role='operator';userName='';items=[];catalog=[];orders=[];basketSelection.clear();
+ busy.clear();catalogBusy=false;hiddenBought=false;orderSaving=false;
+ resetForm();resetCatalogForm();closeCatalog();renderPurchases();renderCatalogAdmin();renderOrders();
 }
 el('purchaseForm').addEventListener('submit',async event=>{
  event.preventDefault();if(!user)return;
@@ -122,16 +132,27 @@ el('purchaseList').addEventListener('click',async event=>{
  }
  const remove=event.target.closest('[data-purchase-delete]');
  if(remove){
-  const item=row(remove.dataset.purchaseDelete);if(!item||!user||role!=='admin')return;
+  const item=row(remove.dataset.purchaseDelete);if(!item||!user)return;
   if(!confirm('Excluir o Produto "'+upper(item.produto)+'" da Lista de Compras?'))return;
   if(busy.has(item.id))return;busy.add(item.id);
   try{await deleteDoc(doc(db,'compras',item.id));if(editing===item.id)resetForm();message('Produto Excluído da Lista.')}
-  catch(err){console.error(err);message('Falha ao Excluir: '+(err.code||err.message),true)}
+  catch(err){console.error(err);message(err.code==='permission-denied'?'A Exclusão Exige Publicar as Regras Atualizadas do Firestore.':'Falha ao Excluir: '+(err.code||err.message),true)}
   finally{busy.delete(item.id)}
  }
 });
 // Operadores podem marcar e desmarcar, desde que ativos no Firestore.
 el('purchaseList').addEventListener('change',async event=>{
+ const basketCheck=event.target.closest('[data-basket-select]');
+ if(basketCheck){
+  const item=row(basketCheck.dataset.basketSelect);
+  if(!item||item.comprado===true||!user)return;
+  if(basketCheck.checked){
+   if(basketSelection.size>=60){basketCheck.checked=false;return message('Cada Pedido Pode Ter Até 60 Produtos.',true)}
+   basketSelection.add(item.id);
+  }else basketSelection.delete(item.id);
+  renderBasket();
+  return;
+ }
  const checkbox=event.target.closest('[data-purchase-check]');if(!checkbox||!user)return;
  const item=row(checkbox.dataset.purchaseCheck);if(!item||busy.has(item.id))return;
  const checked=checkbox.checked;busy.add(item.id);checkbox.disabled=true;
