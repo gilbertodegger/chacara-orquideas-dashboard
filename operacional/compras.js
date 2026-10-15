@@ -346,6 +346,14 @@ onAuthStateChanged(auth,async current=>{
    if(token!==authEpoch)return;
    items=snapshot.docs.map(d=>({id:d.id,...d.data()}));renderPurchases();message('Lista de Compras Sincronizada com o Firebase.');
   },err=>{console.error(err);message('Não Foi Possível Consultar Compras: '+(err.code||err.message),true)});
+  stopOrders=onSnapshot(ordersRef,snapshot=>{
+   if(token!==authEpoch)return;
+   orders=snapshot.docs.map(d=>({id:d.id,...d.data()}));
+   renderOrders();
+  },err=>{
+   console.error('Pedidos de compras:',err);
+   el('purchaseOrdersList').innerHTML='<div class="purchase-empty">Não Foi Possível Carregar Pedidos. '+(err.code==='permission-denied'?'Publique as Regras Atualizadas do Firestore.':'Verifique a Conexão com o Firebase.')+'</div>';
+  });
   stopCatalog=onSnapshot(catalogRef,snapshot=>{
    if(token!==authEpoch)return;
    catalog=snapshot.docs.map(d=>({id:d.id,...d.data()}));renderCatalogAdmin();
