@@ -4257,6 +4257,23 @@ section.page > .synapse-page-notes > *{margin:0!important;width:100%;box-sizing:
   #genDistMeta{margin:8px 10px 12px}
 }
 </style>
+<style id="semen-stock-style">
+.semen-controls{display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:16px;background:white;border:1px solid var(--line);border-radius:16px;margin-bottom:18px}
+.semen-controls label,.semen-card label{display:block;font-size:12px;font-weight:700;color:#6e7d73;margin-bottom:8px}
+.semen-controls p{flex:1;margin:0;color:#173629;font-weight:700}
+.semen-controls input,.semen-card input{border:1px solid #dfe5df;border-radius:10px;min-height:44px;padding:10px 12px;font:inherit;background:white;color:#173629;max-width:100%}
+.semen-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px}
+.semen-card,.semen-detail{background:white;border:1px solid var(--line);border-radius:16px;min-width:0;padding:20px}
+.semen-card h3,.semen-detail h3{font-size:17px;margin:0 0 16px;color:#173629}
+.semen-quantity{display:flex;flex-direction:column;gap:5px;margin-bottom:22px}.semen-quantity strong{font-size:36px;line-height:1;color:#173629}.semen-quantity span{font-size:12px;color:#6e7d73}
+.semen-card input{width:100%}.semen-card input:focus,.semen-controls input:focus{outline:2px solid #b08a2a;outline-offset:1px}
+.semen-forecast{display:flex;flex-direction:column;gap:7px;min-height:107px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line);color:#6e7d73;font-size:12px}
+.semen-forecast strong{font-size:21px;color:#2f6f4e}.semen-forecast[data-status="low"] strong{color:#98711f}.semen-forecast[data-status="empty"] strong{color:#b94b4b}.semen-forecast[data-status="pending"] strong,.semen-forecast[data-status="missing"] strong,.semen-forecast[data-status="idle"] strong{font-size:16px;color:#6e7d73}
+.semen-table-wrap{overflow-x:auto}.semen-table{width:100%;border-collapse:collapse;font-size:13px}.semen-table th,.semen-table td{padding:12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}.semen-table thead,.semen-table tfoot{background:#f6f7f1;color:#173629}.semen-table .semen-number{text-align:right;font-variant-numeric:tabular-nums}.semen-empty{text-align:center!important;color:#6e7d73}.semen-notes{font-size:12px;line-height:1.6;color:#6e7d73}.semen-notes p:empty{display:none}
+@media(max-width:1200px){.semen-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:580px){.semen-cards{grid-template-columns:minmax(0,1fr)}.semen-controls{align-items:stretch;gap:14px}.semen-controls>div,.semen-controls>p{width:100%;flex-basis:100%}.semen-controls input{width:100%}.semen-card input,.semen-controls input{font-size:16px}.semen-card,.semen-detail{padding:16px}.semen-forecast{min-height:0}}
+@media print{.semen-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.semen-card{break-inside:avoid}#semenOpenEmbryos{display:none}}
+</style>
 </head>
 <body>
 <div class="app">
@@ -6089,13 +6106,12 @@ section.page > .synapse-page-notes > *{margin:0!important;width:100%;box-sizing:
       </div>
     </section>
 <section id="geneticaEstoque" class="page" aria-labelledby="geneticaEstoqueTitle">
-  <div class="synapse-settings-heading">
-    <h2 id="geneticaEstoqueTitle">Estoque</h2>
-    <p>Estoque da genética.</p>
-  </div>
-  <div class="synapse-settings-card">
-    <p>Nenhum dado de estoque disponível.</p>
-  </div>
+  <div class="synapse-settings-heading"><h2 id="geneticaEstoqueTitle">Estoque de sêmen e embriões</h2><p>Planeje o consumo e acompanhe a cobertura de cada categoria.</p></div>
+  <label class="btn" for="semenStockInput">Importar estoque de sêmen (CSV)</label><input id="semenStockInput" type="file" accept=".csv,text/csv">
+  <div class="semen-controls"><div><label for="semenBaseDate">Data-base da projeção</label><input id="semenBaseDate" type="date"></div><p id="semenSummary"></p><button class="btn" id="semenOpenEmbryos" type="button">Ver estoque de embriões</button></div>
+  <div class="semen-cards"><article class="semen-card"><h3>Convencional</h3><div class="semen-quantity"><strong id="semenQty-convencional">—</strong><span>doses em estoque</span></div><label for="semenUse-convencional">Consumo previsto (doses/mês)</label><input id="semenUse-convencional" data-semen-usage="convencional" type="number" min="0" step="any" inputmode="decimal" placeholder="Informe o consumo"><div id="semenForecast-convencional" class="semen-forecast" aria-live="polite"></div></article><article class="semen-card"><h3>Sexado</h3><div class="semen-quantity"><strong id="semenQty-sexado">—</strong><span>doses em estoque</span></div><label for="semenUse-sexado">Consumo previsto (doses/mês)</label><input id="semenUse-sexado" data-semen-usage="sexado" type="number" min="0" step="any" inputmode="decimal" placeholder="Informe o consumo"><div id="semenForecast-sexado" class="semen-forecast" aria-live="polite"></div></article><article class="semen-card"><h3>Beef</h3><div class="semen-quantity"><strong id="semenQty-beef">—</strong><span>doses em estoque</span></div><label for="semenUse-beef">Consumo previsto (doses/mês)</label><input id="semenUse-beef" data-semen-usage="beef" type="number" min="0" step="any" inputmode="decimal" placeholder="Informe o consumo"><div id="semenForecast-beef" class="semen-forecast" aria-live="polite"></div></article><article class="semen-card"><h3>Embriões</h3><div class="semen-quantity"><strong id="semenQty-embrioes">—</strong><span>embriões em estoque</span></div><label for="semenUse-embrioes">Consumo previsto (embriões/mês)</label><input id="semenUse-embrioes" data-semen-usage="embrioes" type="number" min="0" step="any" inputmode="decimal" placeholder="Informe o consumo"><div id="semenForecast-embrioes" class="semen-forecast" aria-live="polite"></div></article></div>
+  <div class="semen-detail"><h3>Estoque por touro</h3><div class="semen-table-wrap"><table class="semen-table"><thead><tr><th scope="col">Touro</th><th scope="col">NAAB</th><th scope="col">Categoria</th><th scope="col">Canister</th><th scope="col" class="semen-number">Doses</th></tr></thead><tbody id="semenStockRows"></tbody><tfoot><tr><th colspan="4" scope="row">Total de sêmen</th><td id="semenStockTotal" class="semen-number">—</td></tr></tfoot></table></div></div>
+  <footer class="synapse-page-notes semen-notes"><p id="semenImportMessage" role="status" aria-live="polite"></p><p id="semenSource"></p><p id="semenEmbryoSource"></p><p>Cobertura = estoque ÷ consumo mensal × 30 dias. O término é calculado a partir da data-base, arredondado para o próximo dia. Zero no consumo significa sem uso previsto; campo vazio significa consumo ainda não informado. A projeção não baixa o estoque automaticamente nem inclui novas compras.</p><p>Classificação: NAAB com AN/XB ou Tipo B = Beef; Tipo S ou nome terminado em .S = Sexado; Tipo vazio ou C = Convencional. Beef tem prioridade. Os embriões vêm exclusivamente da guia Embrião → Estoque, sem somar resultados de OPU.</p></footer>
 </section>
 </main>
 </div>
@@ -9390,6 +9406,7 @@ function renderEmbryo(){
   embryoRenderDonorTable();
   embryoRenderDetailTable();
   embryoRenderStock();
+  renderSemenStock();
   embryoRenderResults();
 }
 function embryoMatrixDate(v){
@@ -14424,6 +14441,7 @@ document.querySelectorAll(":is(.nav,.synapse-subnav) button[data-page]").forEach
  document.querySelectorAll(":is(.nav,.synapse-subnav) button").forEach(x=>x.classList.remove("active")); b.classList.add("active");
  document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
  document.getElementById(b.dataset.page).classList.add("active");
+ if(b.dataset.page==="geneticaEstoque") renderSemenStock();
  if(b.dataset.page==="individuais") requestAnimationFrame(renderIndividuals);
  if(b.dataset.page==="classificacao") requestAnimationFrame(renderClassification);
  if(b.dataset.page==="benchmark") requestAnimationFrame(renderBenchmark235);
@@ -14909,9 +14927,115 @@ let DASHBOARD_AUTOSAVE_TIMER=null;
 let DASHBOARD_LAST_SAVE_AT=null;
 let DASHBOARD_STORAGE_MODE="";
 
+// Estoque e projeção de consumo. Os dados importados permanecem no navegador.
+const SEMEN_CATEGORIES=[['convencional','Convencional'],['sexado','Sexado'],['beef','Beef'],['embrioes','Embriões']];
+function semenToday(){return new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());}
+let SEMEN_INVENTORY={rows:[],fileName:'',importedAt:'',baseDate:semenToday(),usage:{convencional:null,sexado:null,beef:null,embrioes:null}};
+function semenDate(v){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(v)))return null;
+  const d=new Date(v+'T12:00:00Z');
+  return Number.isFinite(d.getTime())&&d.toISOString().slice(0,10)===v?d:null;
+}
+function semenCategory(naab,type,name){
+  const code=String(naab).replace(/\s/g,'').toUpperCase(),t=String(type||'').trim().toUpperCase();
+  if(/^\d+(AN|XB)\d+$/.test(code)||t==='B'||t==='BEEF')return 'beef';
+  if(t==='S'||t==='SEXADO'||/\.S$/i.test(String(name).trim()))return 'sexado';
+  if(!t||['C','CONVENCIONAL','CONV'].includes(t))return 'convencional';
+  throw new Error('Tipo de sêmen não reconhecido: '+t+'. Confira a coluna Tipo.');
+}
+function semenParseCSV(text){
+  const data=parseDelimited(String(text).trim()),headers=data.headers.map(h=>String(h).trim().toUpperCase());
+  const at=name=>headers.indexOf(name);
+  if(['TOURO','NAAB','DOSE','TIPO'].some(h=>at(h)<0))throw new Error('O CSV precisa conter as colunas TOURO, NAAB, dose e Tipo.');
+  const rows=[];
+  data.rows.forEach((r,i)=>{
+    if(r.every(v=>!String(v).trim()||/^[=\-]+$/.test(String(v).trim())))return;
+    const get=h=>String(r[at(h)]??'').trim();
+    const name=get('TOURO'),naab=get('NAAB').replace(/\s/g,'').toUpperCase(),type=get('TIPO');
+    let raw=get('DOSE');if(/^\d{1,3}(\.\d{3})+$/.test(raw))raw=raw.replace(/\./g,'');
+    if(!/^\d+(?:[.,]0+)?$/.test(raw))throw new Error('Quantidade inválida na linha '+(i+2)+'. Use doses inteiras e não negativas.');
+    const doses=Number(raw.replace(',','.'));
+    if(!name||!/^\d+[A-Z]{1,3}\d+$/.test(naab)||!Number.isSafeInteger(doses))throw new Error('Confira touro, NAAB e doses na linha '+(i+2)+'.');
+    rows.push({name,naab,type,doses,canister:get('CNSTR'),category:semenCategory(naab,type,name)});
+  });
+  if(!rows.length)throw new Error('Nenhuma linha de estoque encontrada no CSV.');
+  if(!Number.isSafeInteger(rows.reduce((n,r)=>n+r.doses,0)))throw new Error('Total de doses inválido.');
+  return rows;
+}
+function semenRestoreState(saved){
+  if(!saved||!Array.isArray(saved.rows))return;
+  const rows=saved.rows.map(r=>{
+    if(!r||typeof r.name!=='string'||typeof r.naab!=='string'||!Number.isSafeInteger(r.doses)||r.doses<0)throw new Error('Estoque de sêmen inválido no backup.');
+    return {name:r.name,naab:r.naab,type:String(r.type||''),canister:String(r.canister||''),doses:r.doses,category:semenCategory(r.naab,r.type,r.name)};
+  });
+  const usage={};SEMEN_CATEGORIES.forEach(([key])=>{const n=saved.usage?.[key];usage[key]=typeof n==='number'&&Number.isFinite(n)&&n>=0?n:null;});
+  SEMEN_INVENTORY={rows,fileName:String(saved.fileName||''),importedAt:String(saved.importedAt||''),baseDate:semenDate(saved.baseDate)?saved.baseDate:semenToday(),usage};
+}
+function semenTotals(){
+  const totals={convencional:0,sexado:0,beef:0};
+  SEMEN_INVENTORY.rows.forEach(r=>{totals[r.category]+=r.doses;});
+  totals.embrioes=Array.isArray(EMBRYO_STOCK)?EMBRYO_STOCK.length:0;
+  return totals;
+}
+function semenCoverage(stock,monthly,baseDate,loaded=true){
+  if(!loaded)return {status:'missing',label:'Importe o estoque',days:null,date:null};
+  if(stock===0)return {status:'empty',label:'Sem estoque',days:0,date:null};
+  if(monthly===null||monthly===undefined)return {status:'pending',label:'Informe o consumo',days:null,date:null};
+  if(!Number.isFinite(monthly)||monthly<0||!semenDate(baseDate))return {status:'invalid',label:'Confira os dados',days:null,date:null};
+  if(monthly===0)return {status:'idle',label:'Sem consumo previsto',days:null,date:null};
+  const days=stock/monthly*30,d=semenDate(baseDate);d.setUTCDate(d.getUTCDate()+Math.ceil(days));
+  return {status:days<=30?'low':'ready',label:'',days,date:Number.isFinite(d.getTime())?d.toISOString().slice(0,10):null};
+}
+function semenFmt(n,d=0){return Number(n).toLocaleString('pt-BR',{maximumFractionDigits:d});}
+function semenFmtDate(v){const d=semenDate(v);return d?d.toLocaleDateString('pt-BR',{timeZone:'UTC'}):'—';}
+function renderSemenStock(){
+  const page=document.getElementById('geneticaEstoque');if(!page)return;
+  const totals=semenTotals(),loaded=!!SEMEN_INVENTORY.fileName||SEMEN_INVENTORY.rows.length>0,embryosLoaded=!!EMBRYO_STOCK_FILE||totals.embrioes>0;
+  const base=document.getElementById('semenBaseDate');if(document.activeElement!==base)base.value=SEMEN_INVENTORY.baseDate;
+  document.getElementById('semenSummary').textContent=loaded?`${semenFmt(totals.convencional+totals.sexado+totals.beef)} doses de sêmen • ${new Set(SEMEN_INVENTORY.rows.map(r=>r.naab)).size} touros`:'Importe o CSV de estoque para iniciar a projeção.';
+  SEMEN_CATEGORIES.forEach(([key])=>{
+    const has=key==='embrioes'?embryosLoaded:loaded,qty=totals[key],rate=SEMEN_INVENTORY.usage[key],f=semenCoverage(qty,rate,SEMEN_INVENTORY.baseDate,has);
+    document.getElementById('semenQty-'+key).textContent=has?semenFmt(qty):'—';
+    const input=document.getElementById('semenUse-'+key);if(document.activeElement!==input)input.value=rate===null?'':rate;
+    const result=document.getElementById('semenForecast-'+key);result.dataset.status=f.status;
+    result.innerHTML=f.days>0?`<strong>${semenFmt(f.days,1)} dias</strong><span>${semenFmt(f.days/30,1)} meses de cobertura</span><span>Término estimado: <b>${f.date?semenFmtDate(f.date):'fora do intervalo de datas'}</b></span>`:`<strong>${f.status==='empty'?'0 dias':esc(f.label)}</strong>${f.status==='empty'?'<span>Sem estoque disponível</span>':''}`;
+  });
+  const body=document.getElementById('semenStockRows');
+  body.innerHTML=SEMEN_INVENTORY.rows.length?SEMEN_INVENTORY.rows.map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.naab)}</td><td>${esc(SEMEN_CATEGORIES.find(([k])=>k===r.category)?.[1]||'')}</td><td>${esc(r.canister||'—')}</td><td class="semen-number">${semenFmt(r.doses)}</td></tr>`).join(''):'<tr><td colspan="5" class="semen-empty">Nenhum estoque de sêmen importado.</td></tr>';
+  document.getElementById('semenStockTotal').textContent=loaded?semenFmt(totals.convencional+totals.sexado+totals.beef):'—';
+  document.getElementById('semenSource').textContent=loaded?`Sêmen: ${SEMEN_INVENTORY.fileName||'backup restaurado'} • ${SEMEN_INVENTORY.rows.length} linhas. Nova importação substitui o saldo anterior.`:'Sêmen: aguardando importação de INVSEM.CSV.';
+  document.getElementById('semenEmbryoSource').textContent=embryosLoaded?`Embriões: ${EMBRYO_STOCK_FILE||'base salva'} • ${semenFmt(totals.embrioes)} registros em Embrião → Estoque. Contagem total, sem filtros.`:'Embriões: importe a base em Embrião → Estoque para ativar o vínculo automático.';
+}
+async function semenImportFile(file){
+  if(!file)return;
+  const status=document.getElementById('semenImportMessage');status.textContent='Importando estoque…';
+  try{
+    const bytes=await file.arrayBuffer();let text;
+    try{text=new TextDecoder('utf-8',{fatal:true}).decode(bytes);}catch(e){text=new TextDecoder('windows-1252').decode(bytes);}
+    const rows=semenParseCSV(text);
+    SEMEN_INVENTORY={...SEMEN_INVENTORY,rows,fileName:file.name,importedAt:new Date().toISOString(),baseDate:semenToday()};
+    renderSemenStock();const saved=await dashboardSaveData({silent:true});
+    status.textContent=`${rows.length} linhas importadas. ${saved?'Estoque e consumos salvos.':'Use Backup em Configurações para guardar os dados.'}`;
+  }catch(e){status.textContent=e.message||'Não foi possível importar o estoque.';}
+}
+function semenInstallControls(){
+  document.getElementById('semenStockInput').addEventListener('change',e=>{semenImportFile(e.target.files?.[0]);e.target.value='';});
+  document.getElementById('semenBaseDate').addEventListener('change',e=>{
+    if(!semenDate(e.target.value)){e.target.setCustomValidity('Informe uma data válida.');e.target.reportValidity();return;}
+    e.target.setCustomValidity('');SEMEN_INVENTORY.baseDate=e.target.value;renderSemenStock();dashboardScheduleAutosave();
+  });
+  document.querySelectorAll('[data-semen-usage]').forEach(input=>input.addEventListener('input',e=>{
+    const el=e.target,value=el.value===''?null:Number(el.value);
+    if(el.validity.badInput||(value!==null&&(!Number.isFinite(value)||value<0))){el.setCustomValidity('Informe um consumo igual ou maior que zero.');el.reportValidity();return;}
+    el.setCustomValidity('');SEMEN_INVENTORY.usage[el.dataset.semenUsage]=value;renderSemenStock();dashboardScheduleAutosave();
+  }));
+  document.getElementById('semenOpenEmbryos').addEventListener('click',()=>document.querySelector('.synapse-subnav [data-page="estoque"]').click());
+}
+
 function dashboardStatePayload(){
   return {
     schema:DASHBOARD_STORAGE_SCHEMA,
+    SEMEN_INVENTORY,
     savedAt:new Date().toISOString(),
     DATA,
     THI_SENSOR,THI_EXTERNAL,THI_EXTERNAL_STATUS,THI_LOSS_PER_POINT_ML,THI_MONTH,THI_SENSOR_FILE,
@@ -14939,6 +15063,7 @@ function dashboardApplyState(s){
     Array.isArray(s.DATA.metrics) && s.DATA.metrics.length>0
   );
   if(savedMonitorValid)DATA=s.DATA;
+  if(s.SEMEN_INVENTORY)semenRestoreState(s.SEMEN_INVENTORY);
 
   if(Array.isArray(s.THI_SENSOR))THI_SENSOR=s.THI_SENSOR;
   if(Array.isArray(s.THI_EXTERNAL))THI_EXTERNAL=s.THI_EXTERNAL;
@@ -15204,6 +15329,7 @@ function dashboardRenderAllDataViews(){
   // MONITOR primeiro: páginas operacionais não podem depender de nenhuma outra guia.
   safeRender("Visão geral / MONITOR", typeof renderAll==="function" ? renderAll : null);
   // Genética é totalmente independente do MONITOR.
+  safeRender("Estoque de genética",renderSemenStock);
   safeRender("Genética", typeof renderGenetics==="function" ? renderGenetics : null);
   safeRender("Classificação", typeof renderClassification==="function" ? renderClassification : null);
   safeRender("Embrião", typeof renderEmbryo==="function" ? renderEmbryo : null);
@@ -15383,7 +15509,8 @@ function pageWaitPaint(){
 
 function pageRenderForCombinedExport(pageId){
   try{
-    if(pageId==="individuais")renderIndividuals();
+    if(pageId==="geneticaEstoque")renderSemenStock();
+    else if(pageId==="individuais")renderIndividuals();
     else if(pageId==="genomica")renderGenetics();
     else if(pageId==="classificacao")renderClassification();
     else if(pageId==="benchmark")renderBenchmark235();
@@ -16220,6 +16347,7 @@ function synapseMovePageNotes(){
   });
 }
 
+semenInstallControls();
 installPageExportButtons();
 synapseMovePageNotes();
 dashboardBootstrap();
