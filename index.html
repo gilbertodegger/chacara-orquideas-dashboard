@@ -4351,7 +4351,7 @@ section.page > .synapse-page-notes > *{margin:0!important;width:100%;box-sizing:
   <path d="M14 9.4h1.7"/>
   <circle cx="7.7" cy="12.6" r=".55"/>
   <path d="M3.4 12.7h1"/>
-</svg></span><span class="nav-text">Classificação</span></span></button><button data-page="classificacaoEvolucao" data-short="Class+"><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16h3v4H5zM10.5 12h3v8h-3zM16 7h3v13h-3z"/><path d="m4 11 5-4 4 2 6-5"/></svg></span><span class="nav-text">Evolução da Classificação</span></span></button></div></nav><nav class="synapse-subnav" data-subgroup="embrioes" aria-label="Subguias de Embrião" hidden><div class="synapse-group-label">Embrião</div><div class="synapse-subnav-items"><button data-page="embriao" data-short="OPU"><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true">
+</svg></span><span class="nav-text">Classificação</span></span></button><button data-page="classificacaoEvolucao" data-short="Class+"><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16h3v4H5zM10.5 12h3v8h-3zM16 7h3v13h-3z"/><path d="m4 11 5-4 4 2 6-5"/></svg></span><span class="nav-text">Evolução da Classificação</span></span></button><button type="button" data-page="geneticaEstoque" data-short="Estoque" aria-label="Estoque" title="Estoque"><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v14H4zM3 3h18v4H3zM9 11h6"/></svg></span><span class="nav-text">Estoque</span></span></button></div></nav><nav class="synapse-subnav" data-subgroup="embrioes" aria-label="Subguias de Embrião" hidden><div class="synapse-group-label">Embrião</div><div class="synapse-subnav-items"><button data-page="embriao" data-short="OPU"><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true">
   <circle cx="12" cy="12" r="8.2"/>
   <circle cx="9.1" cy="10.2" r="1.65"/>
   <circle cx="13.5" cy="8.8" r="1.45"/>
@@ -6088,6 +6088,15 @@ section.page > .synapse-page-notes > *{margin:0!important;width:100%;box-sizing:
         <p class="synapse-settings-note">O backup em JSON permite guardar uma cópia dos dados e transferi-los para outro navegador ou dispositivo.</p>
       </div>
     </section>
+<section id="geneticaEstoque" class="page" aria-labelledby="geneticaEstoqueTitle">
+  <div class="synapse-settings-heading">
+    <h2 id="geneticaEstoqueTitle">Estoque</h2>
+    <p>Estoque da genética.</p>
+  </div>
+  <div class="synapse-settings-card">
+    <p>Nenhum dado de estoque disponível.</p>
+  </div>
+</section>
 </main>
 </div>
 
@@ -6210,7 +6219,7 @@ document.querySelectorAll(':is(.nav,.synapse-subnav) button').forEach(button=>{
   const label=button.querySelector('.nav-text')?.textContent.trim();
   if(label){button.setAttribute('aria-label',label);button.title=label;}
 });
-const SYNAPSE_NAV_GROUPS={"insights": ["producao", "reproducao", "rebanho", "novilhas", "descartes"], "financeiro": ["centroCustos", "mapaPagamento"], "genetica": ["genomica", "classificacao", "classificacaoEvolucao"], "embrioes": ["embriao", "estoque"], "qualidades": ["qualidade", "cultura"], "nutricao": ["alimentacao", "dietas", "operacional"], "planejamentoRebanho": ["planejamento", "individuais", "evolucaoRebanho"]};
+const SYNAPSE_NAV_GROUPS={"insights": ["producao", "reproducao", "rebanho", "novilhas", "descartes"], "financeiro": ["centroCustos", "mapaPagamento"], "genetica": ["genomica", "classificacao", "classificacaoEvolucao", "geneticaEstoque"], "embrioes": ["embriao", "estoque"], "qualidades": ["qualidade", "cultura"], "nutricao": ["alimentacao", "dietas", "operacional"], "planejamentoRebanho": ["planejamento", "individuais", "evolucaoRebanho"]};
 const SYNAPSE_LAST_SUBPAGE={};
 function synapseSyncNavigation(page){
   const group=Object.keys(SYNAPSE_NAV_GROUPS).find(g=>SYNAPSE_NAV_GROUPS[g].includes(page));
@@ -7430,7 +7439,7 @@ async function classificationImport(file){
   if(!file)return;try{CLASS_DATA=await classificationParseXlsx(file);CLASS_SEARCH="";CLASS_LACT_FILTER="all";CLASS_CLASS_FILTER="all";CLASS_SORT={key:"pf",dir:"desc"};renderClassification();await dashboardSaveData({silent:true});toast(`Classificação atualizada: ${CLASS_DATA.rows.length} animais.`);}catch(err){console.error(err);toast(err?.message||"Não foi possível importar a classificação.");}
 }
 
-const pageTitles = {configuracoes:"Configurações",estoque:"Estoque",dietas:"Dietas",operacional:"Operacional",insights:"Insights",geral:"Visão Geral",producao:"Produção",qualidade:"Controle Leiteiro",reproducao:"Reprodução",rebanho:"Rebanho",individuais:"Previsão de Nascimentos",evolucaoRebanho:"Evolução do Rebanho",novilhas:"Novilhas",descartes:"Descartes",financeiro:"Financeiro",centroCustos:"Centro de Custos",mapaPagamento:"Mapa de Pagamento",genomica:"Visão Geral",classificacao:"Classificação",embriao:"OPU",acw:"Monitoramento ACW",climaThi:"Clima / THI",cultura:"Cultura",alimentacao:"Ácidos Graxos",benchmark:"Benchmark",planejamento:"Visão Geral",classificacaoEvolucao:"Evolução da Classificação",coleta:"Coleta"};
+const pageTitles = {geneticaEstoque:"Estoque",configuracoes:"Configurações",estoque:"Estoque",dietas:"Dietas",operacional:"Operacional",insights:"Insights",geral:"Visão Geral",producao:"Produção",qualidade:"Controle Leiteiro",reproducao:"Reprodução",rebanho:"Rebanho",individuais:"Previsão de Nascimentos",evolucaoRebanho:"Evolução do Rebanho",novilhas:"Novilhas",descartes:"Descartes",financeiro:"Financeiro",centroCustos:"Centro de Custos",mapaPagamento:"Mapa de Pagamento",genomica:"Visão Geral",classificacao:"Classificação",embriao:"OPU",acw:"Monitoramento ACW",climaThi:"Clima / THI",cultura:"Cultura",alimentacao:"Ácidos Graxos",benchmark:"Benchmark",planejamento:"Visão Geral",classificacaoEvolucao:"Evolução da Classificação",coleta:"Coleta"};
 
 
 function indNorm(v){
