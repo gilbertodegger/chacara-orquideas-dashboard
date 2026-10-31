@@ -4287,7 +4287,7 @@ section.page > .synapse-page-notes > *{margin:0!important;width:100%;box-sizing:
 #siloMap{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}#siloTotal{font-weight:700;color:#173629}.silo-column{min-width:0;padding:14px;border:1px solid var(--line);border-radius:14px;background:white}.silo-column header{display:flex;align-items:center;justify-content:space-between;gap:4px;color:#173629}.silo-column h3{margin:0}.silo-column header b,.silo-column p{font-size:12px}.silo-column p{color:#606d65}.silo-track{display:grid;gap:3px}.silo-segment{display:flex;align-items:center;gap:12px;padding:7px 12px;min-height:48px;background:#fafbf8;border:1px solid #cbd5ce;border-radius:5px;color:#45574a;text-align:left;cursor:pointer}.silo-segment.full{background:#2f6f4e;color:white;border-color:#295e43}.silo-segment.using{background:#2f6f4e;color:white;border:2px solid #d2a323;box-shadow:inset 4px 0 #d2a323}.silo-segment.done{background:#eee;color:#555}.silo-n{font-weight:800;font-size:17px}.silo-info{display:grid;gap:2px}.silo-info b,.silo-info small{font-size:12px}.silo-segment:focus-visible{outline:3px solid #b08a2a;outline-offset:1px}
 #siloDialog{width:min(440px,94vw);padding:22px;border:1px solid #d7dfd8;border-radius:16px;color:#173629}#siloDialog::backdrop{background:#10251bb3}#siloDialog h3{margin:0}#siloDialog p{font-size:13px;line-height:1.5}.silo-dates,.silo-actions{display:flex;gap:10px;flex-wrap:wrap}.silo-dates label{display:grid;gap:5px;font-size:13px}.silo-dates input{min-width:0;padding:8px;font-size:16px;border:1px solid var(--line);border-radius:8px}#siloDialog [hidden]{display:none}#siloError{color:#963b31}
 @media(max-width:680px){#siloMap{gap:5px}.silo-column{padding:5px}.silo-column header{display:block}.silo-column h3{font-size:15px}.silo-column p{min-height:32px;font-size:11px}.silo-segment{flex-direction:column;align-items:flex-start;gap:2px;padding:5px;min-height:64px}.silo-info small,.silo-info b{font-size:10px}.silo-n{font-size:14px}}
-</style></head>
+</style><style>.silo-column h3{overflow-wrap:anywhere}.silo-column header b{white-space:nowrap}.silo-rename{cursor:pointer;color:#24593d;background:white;border:1px solid #cbd5ce;border-radius:7px;padding:6px 9px;margin-top:7px;font:inherit;font-size:12px}#siloNameDialog{width:min(400px,92vw);border:1px solid #d7dfd8;border-radius:16px;padding:20px;color:#173629}#siloNameDialog::backdrop{background:#10251bb3}#siloNameDialog label{display:grid;gap:5px;margin:14px 0}#siloNameInput{width:100%;padding:10px;border:1px solid #cbd5ce;border-radius:8px;font-size:16px}@media print{.silo-rename{display:none}}</style></head>
 <body>
 <div class="app">
   <aside class="sidebar">
@@ -6064,6 +6064,7 @@ section.page > .synapse-page-notes > *{margin:0!important;width:100%;box-sizing:
   <footer class="synapse-page-notes semen-notes"><p id="semenImportMessage" role="status" aria-live="polite"></p><p id="semenSource"></p><p id="semenEmbryoSource"></p><p>Cobertura = estoque ÷ consumo mensal × 30 dias. O término é calculado a partir da data-base, arredondado para o próximo dia. Zero no consumo significa sem uso previsto; campo vazio significa consumo ainda não informado. A projeção não baixa o estoque automaticamente nem inclui novas compras.</p><p>Classificação: NAAB com AN/XB ou Tipo B = Beef; Tipo S ou nome terminado em .S = Sexado; Tipo vazio ou C = Convencional. Beef tem prioridade. Os embriões vêm exclusivamente da guia Embrião → Estoque, sem somar resultados de OPU.</p></footer>
 </section>
 <section id="silagemEstoque" class="page" aria-labelledby="siloTitle"><div class="synapse-settings-heading"><h2 id="siloTitle">Estoque de silagem</h2><p>Toque em uma seção vazia para marcar estoque. Toque em uma seção marcada para registrar o início e o fim do uso.</p></div><p id="siloTotal"></p><div id="siloMap"></div></section></main>
+<dialog id="siloNameDialog" aria-labelledby="siloNameTitle"><form id="siloNameForm"><h3 id="siloNameTitle">Renomear silo</h3><label>Nome do silo<input id="siloNameInput" type="text" required maxlength="60" autocomplete="off"></label><div class="silo-actions"><button class="btn primary" type="submit">Salvar nome</button><button class="btn" id="siloNameCancel" type="button">Cancelar</button></div></form></dialog>
 <dialog id="siloDialog" aria-labelledby="siloDlgTitle"><form id="siloForm"><h3 id="siloDlgTitle"></h3><p>O início marca a seção em uso. Ao registrar o fim, ela sai do saldo em estoque.</p><div class="silo-dates"><label>Início do uso<input id="siloStart" type="date"></label><label>Fim do uso<input id="siloEnd" type="date"></label></div><p id="siloError" role="alert"></p><p id="siloHistory"></p><div class="silo-actions"><button type="submit" class="btn primary">Salvar datas</button><button type="button" class="btn" id="siloClose">Fechar</button><button type="button" class="btn" id="siloRemove">Desmarcar estoque</button><button type="button" class="btn" id="siloNew">Repor estoque nesta seção</button></div></form></dialog>
 </div>
 
@@ -15045,6 +15046,9 @@ for(const [k,n] of Object.entries(v.samples||{}))if(/^[123]\|\d{4}-(0[1-9]|1[012
 s.source=String(v.source||'');PAY_SIM=s;psBuild()}
 
 const SILO_LENGTHS=[50,80,80];
+let SILO_NAMES=SILO_LENGTHS.map((_,i)=>'Silo '+(i+1));
+function siloNamesRestore(names){SILO_NAMES=SILO_LENGTHS.map((_,i)=>(typeof names?.[i]==='string'&&names[i].trim().slice(0,60))||'Silo '+(i+1))}
+
 let SILAGE={},siloSelection=null;
 function siloDate(d){return typeof d==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d)&&Number.isFinite(Date.parse(d+'T12:00Z'))&&new Date(d+'T12:00Z').toISOString().slice(0,10)===d}
 function siloFmt(d){return d?d.split('-').reverse().join('/'):'—'}
@@ -15053,23 +15057,27 @@ function siloClass(r){return !r?'empty':r.end?'done':r.start?'using':'full'}
 function siloRender(){
 const map=document.getElementById('siloMap');if(!map)return;
 let full=0,using=0;
-map.innerHTML=SILO_LENGTHS.map((metres,i)=>{let count=0;const buttons=Array.from({length:metres/5},(_,idx)=>{const n=idx+1,key=(i+1)+'-'+n,r=SILAGE[key];if(r&&!r.end){count++;full++;if(r.start)using++}
-return '<button type="button" class="silo-segment '+siloClass(r)+'" data-silo="'+key+'" aria-label="Silo '+(i+1)+', seção '+n+', '+siloStatus(r)+'"><span class="silo-n">'+String(n).padStart(2,'0')+'</span><span class="silo-info"><b>'+idx*5+'–'+n*5+' m</b><small>'+siloStatus(r)+'</small></span></button>'}).join('');
-return '<article class="silo-column"><header><h3>Silo '+(i+1)+'</h3><b>'+metres+' m</b></header><p>'+count+' de '+metres/5+' seções com estoque</p><div class="silo-track">'+buttons+'</div></article>'}).join('');
+map.innerHTML=SILO_LENGTHS.map((metres,i)=>{const name=esc(SILO_NAMES[i]).replaceAll(String.fromCharCode(34),'&quot;');let count=0;const buttons=Array.from({length:metres/5},(_,idx)=>{const n=idx+1,key=(i+1)+'-'+n,r=SILAGE[key];if(r&&!r.end){count++;full++;if(r.start)using++}
+return '<button type="button" class="silo-segment '+siloClass(r)+'" data-silo="'+key+'" aria-label="'+name+', seção '+n+', '+siloStatus(r)+'"><span class="silo-n">'+String(n).padStart(2,'0')+'</span><span class="silo-info"><b>'+idx*5+'–'+n*5+' m</b><small>'+siloStatus(r)+'</small></span></button>'}).join('');
+return '<article class="silo-column"><header><h3>'+name+'</h3><b>'+metres+' m</b></header><button class="silo-rename" type="button" data-rename="'+i+'" aria-label="Renomear '+name+'">Renomear</button><p>'+count+' de '+metres/5+' seções com estoque</p><div class="silo-track">'+buttons+'</div></article>'}).join('');
 document.getElementById('siloTotal').textContent=full+' de 42 seções com estoque · '+using+' em uso';
 }
 function siloStore(){siloRender();return dashboardSaveData({silent:true}).then(ok=>{if(!ok)toast('Use Backup em Configurações para guardar o estoque de silagem.')})}
 function siloRestore(data){const safe={};for(let i=0;i<3;i++)for(let n=1;n<=SILO_LENGTHS[i]/5;n++){let k=(i+1)+'-'+n,r=data?.[k];if(!r||typeof r!=='object')continue;const start=siloDate(r.start)?r.start:'',end=start&&siloDate(r.end)&&r.end>=start?r.end:'';
 safe[k]={start,end,history:Array.isArray(r.history)?r.history.filter(h=>h&&siloDate(h.start)&&siloDate(h.end)&&h.end>=h.start).map(h=>({start:h.start,end:h.end})):[]}}SILAGE=safe;siloRender()}
-function siloEdit(key){const r=SILAGE[key],dlg=document.getElementById('siloDialog');siloSelection=key;const [s,n]=key.split('-').map(Number);document.getElementById('siloDlgTitle').textContent='Silo '+s+' · Seção '+n+' ('+(n-1)*5+'–'+n*5+' m)';document.getElementById('siloStart').value=r.start;document.getElementById('siloEnd').value=r.end;document.getElementById('siloError').textContent='';document.getElementById('siloNew').hidden=!r.end;document.getElementById('siloRemove').hidden=!!(r.start||r.history.length);document.getElementById('siloHistory').textContent=r.history.length?'Usos anteriores: '+r.history.map(h=>siloFmt(h.start)+' a '+siloFmt(h.end)).join('; '):'';if(!dlg.open)dlg.showModal()}
-function siloInstall(){const by=id=>document.getElementById(id),dlg=by('siloDialog');by('siloMap').onclick=e=>{const key=e.target.closest('[data-silo]')?.dataset.silo;if(!key)return;if(!SILAGE[key]){SILAGE[key]={start:'',end:'',history:[]};siloStore()}siloEdit(key)};
+function siloEdit(key){const r=SILAGE[key],dlg=document.getElementById('siloDialog');siloSelection=key;const [s,n]=key.split('-').map(Number);document.getElementById('siloDlgTitle').textContent=SILO_NAMES[s-1]+' · Seção '+n+' ('+(n-1)*5+'–'+n*5+' m)';document.getElementById('siloStart').value=r.start;document.getElementById('siloEnd').value=r.end;document.getElementById('siloError').textContent='';document.getElementById('siloNew').hidden=!r.end;document.getElementById('siloRemove').hidden=!!(r.start||r.history.length);document.getElementById('siloHistory').textContent=r.history.length?'Usos anteriores: '+r.history.map(h=>siloFmt(h.start)+' a '+siloFmt(h.end)).join('; '):'';if(!dlg.open)dlg.showModal()}
+function siloInstall(){const by=id=>document.getElementById(id),dlg=by('siloDialog');const names=by('siloNameDialog'),field=by('siloNameInput');let idx=0;
+by('siloNameCancel').onclick=()=>names.close();
+field.oninput=()=>field.setCustomValidity('');
+by('siloNameForm').onsubmit=e=>{e.preventDefault();const name=field.value.trim();if(!name){field.setCustomValidity('Informe o nome do silo.');field.reportValidity();return}SILO_NAMES[idx]=name;names.close();siloStore();by('siloMap').querySelector('[data-rename="'+idx+'"]')?.focus()};
+by('siloMap').onclick=e=>{const edit=e.target.closest('[data-rename]');if(edit){idx=Number(edit.dataset.rename);field.setCustomValidity('');field.value=SILO_NAMES[idx];names.showModal();field.focus();field.select();return}const key=e.target.closest('[data-silo]')?.dataset.silo;if(!key)return;if(!SILAGE[key]){SILAGE[key]={start:'',end:'',history:[]};siloStore()}siloEdit(key)};
 by('siloClose').onclick=()=>dlg.close();by('siloForm').onsubmit=e=>{e.preventDefault();const r=SILAGE[siloSelection],start=by('siloStart').value,end=by('siloEnd').value;if((end&&(!start||end<start))||(start&&r.history.length&&start<r.history.at(-1).end)){by('siloError').textContent='Confira as datas: o fim deve ser igual ou posterior ao início e os ciclos devem seguir a ordem de uso.';return}Object.assign(r,{start,end});siloStore();dlg.close()};
 by('siloRemove').onclick=()=>{delete SILAGE[siloSelection];siloStore();dlg.close()};by('siloNew').onclick=()=>{const r=SILAGE[siloSelection];if(!r.end)return;r.history.push({start:r.start,end:r.end});r.start=r.end='';siloStore();siloEdit(siloSelection)};siloRender()}
 
 function dashboardStatePayload(){
   return {
     schema:DASHBOARD_STORAGE_SCHEMA,
-    SILAGE,PAY_SIM,SEMEN_INVENTORY,
+    SILO_NAMES,SILAGE,PAY_SIM,SEMEN_INVENTORY,
     savedAt:new Date().toISOString(),
     DATA,
     THI_SENSOR,THI_EXTERNAL,THI_EXTERNAL_STATUS,THI_LOSS_PER_POINT_ML,THI_MONTH,THI_SENSOR_FILE,
@@ -15097,6 +15105,7 @@ function dashboardApplyState(s){
     Array.isArray(s.DATA.metrics) && s.DATA.metrics.length>0
   );
   if(savedMonitorValid)DATA=s.DATA;
+  siloNamesRestore(s.SILO_NAMES);
   siloRestore(s.SILAGE);
   if(s.PAY_SIM)psRestore(s.PAY_SIM);
   if(s.SEMEN_INVENTORY)semenRestoreState(s.SEMEN_INVENTORY);
