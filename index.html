@@ -4283,6 +4283,10 @@ section.page > .synapse-page-notes > *{margin:0!important;width:100%;box-sizing:
 #simPagamento table{width:100%;border-collapse:collapse;font-size:13px}#simPagamento th,#simPagamento td{padding:8px;text-align:right;border-bottom:1px solid var(--line)}#simPagamento th:first-child{text-align:left}
 .ps-scroll{overflow:auto}#simPagamento summary{cursor:pointer;margin:12px 0}#psSamples input{width:90px!important}
 @media(max-width:680px){#psKpis{grid-template-columns:1fr}#simPagamento .ps-panel{padding:12px}#simPagamento input:not([type=file]){font-size:16px}#psSamples input{min-width:64px;width:100%!important}#simPagamento th,#simPagamento td{padding:5px}}
+</style><style>
+#siloMap{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}#siloTotal{font-weight:700;color:#173629}.silo-column{min-width:0;padding:14px;border:1px solid var(--line);border-radius:14px;background:white}.silo-column header{display:flex;align-items:center;justify-content:space-between;gap:4px;color:#173629}.silo-column h3{margin:0}.silo-column header b,.silo-column p{font-size:12px}.silo-column p{color:#606d65}.silo-track{display:grid;gap:3px}.silo-segment{display:flex;align-items:center;gap:12px;padding:7px 12px;min-height:48px;background:#fafbf8;border:1px solid #cbd5ce;border-radius:5px;color:#45574a;text-align:left;cursor:pointer}.silo-segment.full{background:#2f6f4e;color:white;border-color:#295e43}.silo-segment.using{background:#2f6f4e;color:white;border:2px solid #d2a323;box-shadow:inset 4px 0 #d2a323}.silo-segment.done{background:#eee;color:#555}.silo-n{font-weight:800;font-size:17px}.silo-info{display:grid;gap:2px}.silo-info b,.silo-info small{font-size:12px}.silo-segment:focus-visible{outline:3px solid #b08a2a;outline-offset:1px}
+#siloDialog{width:min(440px,94vw);padding:22px;border:1px solid #d7dfd8;border-radius:16px;color:#173629}#siloDialog::backdrop{background:#10251bb3}#siloDialog h3{margin:0}#siloDialog p{font-size:13px;line-height:1.5}.silo-dates,.silo-actions{display:flex;gap:10px;flex-wrap:wrap}.silo-dates label{display:grid;gap:5px;font-size:13px}.silo-dates input{min-width:0;padding:8px;font-size:16px;border:1px solid var(--line);border-radius:8px}#siloDialog [hidden]{display:none}#siloError{color:#963b31}
+@media(max-width:680px){#siloMap{gap:5px}.silo-column{padding:5px}.silo-column header{display:block}.silo-column h3{font-size:15px}.silo-column p{min-height:32px;font-size:11px}.silo-segment{flex-direction:column;align-items:flex-start;gap:2px;padding:5px;min-height:64px}.silo-info small,.silo-info b{font-size:10px}.silo-n{font-size:14px}}
 </style></head>
 <body>
 <div class="app">
@@ -4403,7 +4407,7 @@ section.page > .synapse-page-notes > *{margin:0!important;width:100%;box-sizing:
   <path d="M12 20V9.8"/>
   <path d="M9.1 14.2c1 .2 1.9.7 2.9 1.7"/>
   <path d="M14.9 12.4c-1 .4-2 1.1-2.9 2.2"/>
-</svg></span><span class="nav-text">Ácidos Graxos</span></span></button><button type="button" data-page="dietas" data-short="Dietas"><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16a8 8 0 0 1-16 0ZM12 12V3M8 4l4 4 4-4"/></svg></span><span class="nav-text">Dietas</span></span></button><button type="button" data-page="operacional" data-short="Operacional"><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h11v12H3zM14 9h4l3 4v3h-7"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg></span><span class="nav-text">Operacional</span></span></button></div></nav></div>
+</svg></span><span class="nav-text">Ácidos Graxos</span></span></button><button type="button" data-page="dietas" data-short="Dietas"><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16a8 8 0 0 1-16 0ZM12 12V3M8 4l4 4 4-4"/></svg></span><span class="nav-text">Dietas</span></span></button><button type="button" data-page="operacional" data-short="Operacional"><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h11v12H3zM14 9h4l3 4v3h-7"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg></span><span class="nav-text">Operacional</span></span></button><button type="button" data-page="silagemEstoque" data-short="Estoque"><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V7l5-4 5 4v14zM3 9h10M3 13h10M3 17h10M15 6l2-2 4 3v14h-6M16 11h5M16 16h5"/></svg></span><span class="nav-text">Estoque</span></span></button></div></nav></div>
     <section id="geral" class="page active">
       <div class="general-import-row">
         <label class="btn primary" for="fileInput">Importar</label>
@@ -6059,7 +6063,8 @@ section.page > .synapse-page-notes > *{margin:0!important;width:100%;box-sizing:
   <div class="semen-detail"><h3>Estoque por touro</h3><div class="semen-table-wrap"><table class="semen-table"><thead><tr><th scope="col">Touro</th><th scope="col">NAAB</th><th scope="col">Categoria</th><th scope="col">Canister</th><th scope="col" class="semen-number">Doses</th></tr></thead><tbody id="semenStockRows"></tbody><tfoot><tr><th colspan="4" scope="row">Total de sêmen</th><td id="semenStockTotal" class="semen-number">—</td></tr></tfoot></table></div></div>
   <footer class="synapse-page-notes semen-notes"><p id="semenImportMessage" role="status" aria-live="polite"></p><p id="semenSource"></p><p id="semenEmbryoSource"></p><p>Cobertura = estoque ÷ consumo mensal × 30 dias. O término é calculado a partir da data-base, arredondado para o próximo dia. Zero no consumo significa sem uso previsto; campo vazio significa consumo ainda não informado. A projeção não baixa o estoque automaticamente nem inclui novas compras.</p><p>Classificação: NAAB com AN/XB ou Tipo B = Beef; Tipo S ou nome terminado em .S = Sexado; Tipo vazio ou C = Convencional. Beef tem prioridade. Os embriões vêm exclusivamente da guia Embrião → Estoque, sem somar resultados de OPU.</p></footer>
 </section>
-</main>
+<section id="silagemEstoque" class="page" aria-labelledby="siloTitle"><div class="synapse-settings-heading"><h2 id="siloTitle">Estoque de silagem</h2><p>Toque em uma seção vazia para marcar estoque. Toque em uma seção marcada para registrar o início e o fim do uso.</p></div><p id="siloTotal"></p><div id="siloMap"></div></section></main>
+<dialog id="siloDialog" aria-labelledby="siloDlgTitle"><form id="siloForm"><h3 id="siloDlgTitle"></h3><p>O início marca a seção em uso. Ao registrar o fim, ela sai do saldo em estoque.</p><div class="silo-dates"><label>Início do uso<input id="siloStart" type="date"></label><label>Fim do uso<input id="siloEnd" type="date"></label></div><p id="siloError" role="alert"></p><p id="siloHistory"></p><div class="silo-actions"><button type="submit" class="btn primary">Salvar datas</button><button type="button" class="btn" id="siloClose">Fechar</button><button type="button" class="btn" id="siloRemove">Desmarcar estoque</button><button type="button" class="btn" id="siloNew">Repor estoque nesta seção</button></div></form></dialog>
 </div>
 
 <div id="metricModalBackdrop" class="metric-modal-backdrop" aria-hidden="true">
@@ -6181,7 +6186,7 @@ document.querySelectorAll(':is(.nav,.synapse-subnav) button').forEach(button=>{
   const label=button.querySelector('.nav-text')?.textContent.trim();
   if(label){button.setAttribute('aria-label',label);button.title=label;}
 });
-const SYNAPSE_NAV_GROUPS={"insights": ["producao", "reproducao", "rebanho", "novilhas", "descartes"], "financeiro": ["mapaPagamento", "simPagamento"], "genetica": ["genomica", "classificacao", "classificacaoEvolucao", "geneticaEstoque"], "embrioes": ["embriao", "estoque"], "qualidades": ["qualidade", "cultura"], "nutricao": ["alimentacao", "dietas", "operacional"], "planejamentoRebanho": ["planejamento", "individuais", "evolucaoRebanho"]};
+const SYNAPSE_NAV_GROUPS={"insights": ["producao", "reproducao", "rebanho", "novilhas", "descartes"], "financeiro": ["mapaPagamento", "simPagamento"], "genetica": ["genomica", "classificacao", "classificacaoEvolucao", "geneticaEstoque"], "embrioes": ["embriao", "estoque"], "qualidades": ["qualidade", "cultura"], "nutricao": ["alimentacao", "dietas", "operacional", "silagemEstoque"], "planejamentoRebanho": ["planejamento", "individuais", "evolucaoRebanho"]};
 const SYNAPSE_LAST_SUBPAGE={};
 function synapseSyncNavigation(page){
   const group=Object.keys(SYNAPSE_NAV_GROUPS).find(g=>SYNAPSE_NAV_GROUPS[g].includes(page));
@@ -7401,7 +7406,7 @@ async function classificationImport(file){
   if(!file)return;try{CLASS_DATA=await classificationParseXlsx(file);CLASS_SEARCH="";CLASS_LACT_FILTER="all";CLASS_CLASS_FILTER="all";CLASS_SORT={key:"pf",dir:"desc"};renderClassification();await dashboardSaveData({silent:true});toast(`Classificação atualizada: ${CLASS_DATA.rows.length} animais.`);}catch(err){console.error(err);toast(err?.message||"Não foi possível importar a classificação.");}
 }
 
-const pageTitles = {simPagamento:"Simulador Pagamento",geneticaEstoque:"Estoque",configuracoes:"Configurações",estoque:"Estoque",dietas:"Dietas",operacional:"Operacional",insights:"Insights",geral:"Visão Geral",producao:"Produção",qualidade:"Controle Leiteiro",reproducao:"Reprodução",rebanho:"Rebanho",individuais:"Previsão de Nascimentos",evolucaoRebanho:"Evolução do Rebanho",novilhas:"Novilhas",descartes:"Descartes",financeiro:"Financeiro",centroCustos:"Centro de Custos",mapaPagamento:"Mapa de Pagamento",genomica:"Visão Geral",classificacao:"Classificação",embriao:"OPU",acw:"Monitoramento ACW",climaThi:"Clima / THI",cultura:"Cultura",alimentacao:"Ácidos Graxos",benchmark:"Benchmark",planejamento:"Visão Geral",classificacaoEvolucao:"Evolução da Classificação",coleta:"Coleta"};
+const pageTitles = {silagemEstoque:"Estoque de silagem",simPagamento:"Simulador Pagamento",geneticaEstoque:"Estoque",configuracoes:"Configurações",estoque:"Estoque",dietas:"Dietas",operacional:"Operacional",insights:"Insights",geral:"Visão Geral",producao:"Produção",qualidade:"Controle Leiteiro",reproducao:"Reprodução",rebanho:"Rebanho",individuais:"Previsão de Nascimentos",evolucaoRebanho:"Evolução do Rebanho",novilhas:"Novilhas",descartes:"Descartes",financeiro:"Financeiro",centroCustos:"Centro de Custos",mapaPagamento:"Mapa de Pagamento",genomica:"Visão Geral",classificacao:"Classificação",embriao:"OPU",acw:"Monitoramento ACW",climaThi:"Clima / THI",cultura:"Cultura",alimentacao:"Ácidos Graxos",benchmark:"Benchmark",planejamento:"Visão Geral",classificacaoEvolucao:"Evolução da Classificação",coleta:"Coleta"};
 
 
 function indNorm(v){
@@ -15039,10 +15044,32 @@ for(const k of Object.keys(s.rates))if(Number.isFinite(v.rates?.[k])&&v.rates[k]
 for(const [k,n] of Object.entries(v.samples||{}))if(/^[123]\|\d{4}-(0[1-9]|1[012])\|[1-4]\|(fat|protein|scc)$/.test(k)&&Number.isFinite(n)&&n>=0)s.samples[k]=n;
 s.source=String(v.source||'');PAY_SIM=s;psBuild()}
 
+const SILO_LENGTHS=[50,80,80];
+let SILAGE={},siloSelection=null;
+function siloDate(d){return typeof d==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(d)&&Number.isFinite(Date.parse(d+'T12:00Z'))&&new Date(d+'T12:00Z').toISOString().slice(0,10)===d}
+function siloFmt(d){return d?d.split('-').reverse().join('/'):'—'}
+function siloStatus(r){return !r?'Vazia':r.end?'Concluída':r.start?'Em uso':'Em estoque'}
+function siloClass(r){return !r?'empty':r.end?'done':r.start?'using':'full'}
+function siloRender(){
+const map=document.getElementById('siloMap');if(!map)return;
+let full=0,using=0;
+map.innerHTML=SILO_LENGTHS.map((metres,i)=>{let count=0;const buttons=Array.from({length:metres/5},(_,idx)=>{const n=idx+1,key=(i+1)+'-'+n,r=SILAGE[key];if(r&&!r.end){count++;full++;if(r.start)using++}
+return '<button type="button" class="silo-segment '+siloClass(r)+'" data-silo="'+key+'" aria-label="Silo '+(i+1)+', seção '+n+', '+siloStatus(r)+'"><span class="silo-n">'+String(n).padStart(2,'0')+'</span><span class="silo-info"><b>'+idx*5+'–'+n*5+' m</b><small>'+siloStatus(r)+'</small></span></button>'}).join('');
+return '<article class="silo-column"><header><h3>Silo '+(i+1)+'</h3><b>'+metres+' m</b></header><p>'+count+' de '+metres/5+' seções com estoque</p><div class="silo-track">'+buttons+'</div></article>'}).join('');
+document.getElementById('siloTotal').textContent=full+' de 42 seções com estoque · '+using+' em uso';
+}
+function siloStore(){siloRender();return dashboardSaveData({silent:true}).then(ok=>{if(!ok)toast('Use Backup em Configurações para guardar o estoque de silagem.')})}
+function siloRestore(data){const safe={};for(let i=0;i<3;i++)for(let n=1;n<=SILO_LENGTHS[i]/5;n++){let k=(i+1)+'-'+n,r=data?.[k];if(!r||typeof r!=='object')continue;const start=siloDate(r.start)?r.start:'',end=start&&siloDate(r.end)&&r.end>=start?r.end:'';
+safe[k]={start,end,history:Array.isArray(r.history)?r.history.filter(h=>h&&siloDate(h.start)&&siloDate(h.end)&&h.end>=h.start).map(h=>({start:h.start,end:h.end})):[]}}SILAGE=safe;siloRender()}
+function siloEdit(key){const r=SILAGE[key],dlg=document.getElementById('siloDialog');siloSelection=key;const [s,n]=key.split('-').map(Number);document.getElementById('siloDlgTitle').textContent='Silo '+s+' · Seção '+n+' ('+(n-1)*5+'–'+n*5+' m)';document.getElementById('siloStart').value=r.start;document.getElementById('siloEnd').value=r.end;document.getElementById('siloError').textContent='';document.getElementById('siloNew').hidden=!r.end;document.getElementById('siloRemove').hidden=!!(r.start||r.history.length);document.getElementById('siloHistory').textContent=r.history.length?'Usos anteriores: '+r.history.map(h=>siloFmt(h.start)+' a '+siloFmt(h.end)).join('; '):'';if(!dlg.open)dlg.showModal()}
+function siloInstall(){const by=id=>document.getElementById(id),dlg=by('siloDialog');by('siloMap').onclick=e=>{const key=e.target.closest('[data-silo]')?.dataset.silo;if(!key)return;if(!SILAGE[key]){SILAGE[key]={start:'',end:'',history:[]};siloStore()}siloEdit(key)};
+by('siloClose').onclick=()=>dlg.close();by('siloForm').onsubmit=e=>{e.preventDefault();const r=SILAGE[siloSelection],start=by('siloStart').value,end=by('siloEnd').value;if((end&&(!start||end<start))||(start&&r.history.length&&start<r.history.at(-1).end)){by('siloError').textContent='Confira as datas: o fim deve ser igual ou posterior ao início e os ciclos devem seguir a ordem de uso.';return}Object.assign(r,{start,end});siloStore();dlg.close()};
+by('siloRemove').onclick=()=>{delete SILAGE[siloSelection];siloStore();dlg.close()};by('siloNew').onclick=()=>{const r=SILAGE[siloSelection];if(!r.end)return;r.history.push({start:r.start,end:r.end});r.start=r.end='';siloStore();siloEdit(siloSelection)};siloRender()}
+
 function dashboardStatePayload(){
   return {
     schema:DASHBOARD_STORAGE_SCHEMA,
-    PAY_SIM,SEMEN_INVENTORY,
+    SILAGE,PAY_SIM,SEMEN_INVENTORY,
     savedAt:new Date().toISOString(),
     DATA,
     THI_SENSOR,THI_EXTERNAL,THI_EXTERNAL_STATUS,THI_LOSS_PER_POINT_ML,THI_MONTH,THI_SENSOR_FILE,
@@ -15070,6 +15097,7 @@ function dashboardApplyState(s){
     Array.isArray(s.DATA.metrics) && s.DATA.metrics.length>0
   );
   if(savedMonitorValid)DATA=s.DATA;
+  siloRestore(s.SILAGE);
   if(s.PAY_SIM)psRestore(s.PAY_SIM);
   if(s.SEMEN_INVENTORY)semenRestoreState(s.SEMEN_INVENTORY);
 
@@ -16355,6 +16383,7 @@ function synapseMovePageNotes(){
   });
 }
 
+siloInstall();
 psInstall();
 semenInstallControls();
 installPageExportButtons();
