@@ -4274,7 +4274,16 @@ section.page > .synapse-page-notes > *{margin:0!important;width:100%;box-sizing:
 @media(max-width:580px){.semen-cards{grid-template-columns:minmax(0,1fr)}.semen-controls{align-items:stretch;gap:14px}.semen-controls>div,.semen-controls>p{width:100%;flex-basis:100%}.semen-controls input{width:100%}.semen-card input,.semen-controls input{font-size:16px}.semen-card,.semen-detail{padding:16px}.semen-forecast{min-height:0}}
 @media print{.semen-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.semen-card{break-inside:avoid}#semenOpenEmbryos{display:none}}
 </style>
-</head>
+<style>
+#simPagamento .ps-panel,#psKpis>div{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;margin:14px 0}
+#simPagamento h3{margin:0 0 12px;color:#173629}#simPagamento p{color:#5e7065;font-size:13px}
+.ps-fields{display:flex;gap:12px;flex-wrap:wrap}.ps-fields label{display:grid;gap:5px;font-weight:600;font-size:12px}
+#simPagamento input:not([type=file]){border:1px solid #d6dfd7;border-radius:8px;padding:9px;font:inherit;max-width:100%;width:145px}
+#psOverrides input{background:#fff4bd}#psKpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}#psKpis>div{margin:0}#psKpis strong{display:block;font-size:22px;color:#173629}
+#simPagamento table{width:100%;border-collapse:collapse;font-size:13px}#simPagamento th,#simPagamento td{padding:8px;text-align:right;border-bottom:1px solid var(--line)}#simPagamento th:first-child{text-align:left}
+.ps-scroll{overflow:auto}#simPagamento summary{cursor:pointer;margin:12px 0}#psSamples input{width:90px!important}
+@media(max-width:680px){#psKpis{grid-template-columns:1fr}#simPagamento .ps-panel{padding:12px}#simPagamento input:not([type=file]){font-size:16px}#psSamples input{min-width:64px;width:100%!important}#simPagamento th,#simPagamento td{padding:5px}}
+</style></head>
 <body>
 <div class="app">
   <aside class="sidebar">
@@ -4289,7 +4298,7 @@ section.page > .synapse-page-notes > *{margin:0!important;width:100%;box-sizing:
   <circle cx="7" cy="17" r="1.8"/>
   <circle cx="18" cy="17" r="1.8"/>
   <path d="M8.6 11.2c-.7.9-1 1.5-1 2a1.2 1.2 0 0 0 2.4 0c0-.5-.4-1.2-1.4-2Z"/>
-</svg></span><span class="nav-text">Coleta</span></span></button><button type="button" class="synapse-group" data-group="planejamentoRebanho" data-short="Plano" aria-pressed="false"><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/><path d="m8 15 2 2 5-5"/></svg></span><span class="nav-text">Planejamento do Rebanho</span></span></button><button type="button" class="synapse-group" data-group="financeiro" data-short="Financeiro" aria-pressed="false"><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="6.5" ry="2.5"/><path d="M5.5 6v5c0 1.4 2.9 2.5 6.5 2.5s6.5-1.1 6.5-2.5V6"/><path d="M5.5 11v5c0 1.4 2.9 2.5 6.5 2.5s6.5-1.1 6.5-2.5v-5"/></svg></span><span class="nav-text">Financeiro</span></span></button><button type="button" class="synapse-group" data-group="genetica" data-short="Genética" aria-pressed="false"><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M8 3c4 0 4 6 8 6"/><path d="M8 21c4 0 4-6 8-6"/><path d="M8 3c0 5 8 5 8 10s-8 5-8 8"/><path d="M16 3c0 5-8 5-8 10s8 5 8 8"/><path d="M9 7h6"/><path d="M9 17h6"/></svg></span><span class="nav-text">Genética</span></span></button><button type="button" class="synapse-group" data-group="embrioes" data-short="Embrião" aria-pressed="false"><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true">
+</svg></span><span class="nav-text">Coleta</span></span></button><button type="button" class="synapse-group" data-group="planejamentoRebanho" data-short="Plano" aria-pressed="false"><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/><path d="m8 15 2 2 5-5"/></svg></span><span class="nav-text">Planejamento do Rebanho</span></span></button><button type="button" class="synapse-group" data-group="financeiro" data-short="Mapa de Pagamento" aria-pressed="false"><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="6.5" ry="2.5"/><path d="M5.5 6v5c0 1.4 2.9 2.5 6.5 2.5s6.5-1.1 6.5-2.5V6"/><path d="M5.5 11v5c0 1.4 2.9 2.5 6.5 2.5s6.5-1.1 6.5-2.5v-5"/></svg></span><span class="nav-text">Mapa de Pagamento</span></span></button><button type="button" class="synapse-group" data-group="genetica" data-short="Genética" aria-pressed="false"><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M8 3c4 0 4 6 8 6"/><path d="M8 21c4 0 4-6 8-6"/><path d="M8 3c0 5 8 5 8 10s-8 5-8 8"/><path d="M16 3c0 5-8 5-8 10s8 5 8 8"/><path d="M9 7h6"/><path d="M9 17h6"/></svg></span><span class="nav-text">Genética</span></span></button><button type="button" class="synapse-group" data-group="embrioes" data-short="Embrião" aria-pressed="false"><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true">
   <circle cx="12" cy="12" r="8.2"/>
   <circle cx="9.1" cy="10.2" r="1.65"/>
   <circle cx="13.5" cy="8.8" r="1.45"/>
@@ -4361,7 +4370,7 @@ section.page > .synapse-page-notes > *{margin:0!important;width:100%;box-sizing:
   <circle cx="14.4" cy="11.3" r=".65"/>
   <path d="M10.2 14.5c1.1.7 2.5.7 3.6 0"/>
   <path d="M11 16.1h2"/>
-</svg></span><span class="nav-text">Novilhas</span></span></button><button data-page="descartes" data-short="Desc."><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 10c.5-3 3.2-5 7-5s6.5 2 7 5"/><path d="M4.5 10h15"/><path d="M5 13h14"/><path d="M6 13l1.2 1.5 1.4-1.5 1.4 1.5 1.4-1.5 1.4 1.5 1.4-1.5 1.4 1.5L18 13"/><path d="M5 17h14"/><path d="M6 17c.4 1.3 1.4 2 2.8 2h6.4c1.4 0 2.4-.7 2.8-2"/></svg></span><span class="nav-text">Descartes</span></span></button></div></nav><nav class="synapse-subnav" data-subgroup="financeiro" aria-label="Subguias de Financeiro" hidden><div class="synapse-group-label">Financeiro</div><div class="synapse-subnav-items"><button data-page="centroCustos" data-short="Custos"><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 3v9h9"/><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 12 7 19"/></svg></span><span class="nav-text">Centro de Custos</span></span></button><button data-page="mapaPagamento" data-short="Pgto."><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></span><span class="nav-text">Mapa de Pagamento</span></span></button></div></nav><nav class="synapse-subnav" data-subgroup="genetica" aria-label="Subguias de Genética" hidden><div class="synapse-group-label">Genética</div><div class="synapse-subnav-items"><button data-page="genomica" data-short="Visão Geral"><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M8 3c4 0 4 6 8 6"/><path d="M8 21c4 0 4-6 8-6"/><path d="M8 3c0 5 8 5 8 10s-8 5-8 8"/><path d="M16 3c0 5-8 5-8 10s8 5 8 8"/><path d="M9 7h6"/><path d="M9 17h6"/></svg></span><span class="nav-text">Visão Geral</span></span></button><button data-page="classificacao" data-short="Class."><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true">
+</svg></span><span class="nav-text">Novilhas</span></span></button><button data-page="descartes" data-short="Desc."><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 10c.5-3 3.2-5 7-5s6.5 2 7 5"/><path d="M4.5 10h15"/><path d="M5 13h14"/><path d="M6 13l1.2 1.5 1.4-1.5 1.4 1.5 1.4-1.5 1.4 1.5 1.4-1.5 1.4 1.5L18 13"/><path d="M5 17h14"/><path d="M6 17c.4 1.3 1.4 2 2.8 2h6.4c1.4 0 2.4-.7 2.8-2"/></svg></span><span class="nav-text">Descartes</span></span></button></div></nav><nav class="synapse-subnav" data-subgroup="financeiro" aria-label="Subguias de Mapa de Pagamento" hidden><div class="synapse-group-label">Mapa de Pagamento</div><div class="synapse-subnav-items"><button data-page="mapaPagamento" data-short="Pgto."><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 13h6"/><path d="M10 17h4"/></svg></span><span class="nav-text">Mapa de Pagamento</span></span></button><button data-page="simPagamento" data-short="Simular"><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M8 7h8M8 12h2m3 0h3m-8 5h2m3 0h3"/></svg></span><span class="nav-text">Simulador Pagamento</span></span></button></div></nav><nav class="synapse-subnav" data-subgroup="genetica" aria-label="Subguias de Genética" hidden><div class="synapse-group-label">Genética</div><div class="synapse-subnav-items"><button data-page="genomica" data-short="Visão Geral"><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M8 3c4 0 4 6 8 6"/><path d="M8 21c4 0 4-6 8-6"/><path d="M8 3c0 5 8 5 8 10s-8 5-8 8"/><path d="M16 3c0 5-8 5-8 10s8 5 8 8"/><path d="M9 7h6"/><path d="M9 17h6"/></svg></span><span class="nav-text">Visão Geral</span></span></button><button data-page="classificacao" data-short="Class."><span class="nav-item"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true">
   <path d="M4.2 13.2c0-1.6 1.2-2.9 2.8-2.9h4.1c.8 0 1.5-.2 2.1-.7l1.8-1.5c.5-.4 1.1-.6 1.7-.6h1.1c.5 0 .9.4.9.9v3.1c0 .8-.2 1.5-.7 2.1l-.9 1.2c-.4.5-1 .8-1.6.8H7c-1.6 0-2.8-1.3-2.8-2.9Z"/>
   <path d="M6.7 15.9v2.1M10.2 15.9v2.1M15.9 15.6v2.4"/>
   <path d="M18.5 8.8 20.3 7l.6 2.4"/>
@@ -4822,80 +4831,17 @@ section.page > .synapse-page-notes > *{margin:0!important;width:100%;box-sizing:
     
     
 
-<section id="centroCustos" class="page finance-protected finance-locked">
-  <div class="section-title">
-    <span>Principais despesas de produção, outros custos e relação com o pagamento do leite</span>
-  </div>
-
-  <div class="cost-toolbar">
-    <div class="cost-actions">
-      <label class="btn primary" for="costFileInput">Importar</label>
-      <input id="costFileInput" type="file" accept=".csv,text/csv" />
-      <div class="cost-field">
-        <label for="costMonthSelect">Período</label>
-        <select id="costMonthSelect" class="select"></select>
-      </div>
-    </div>
-    <div id="costFileInfo" class="cost-file-info"></div>
-  </div>
-
-  <div id="costKpis" class="cost-kpis"></div>
-
-  <div class="cost-grid">
-    <div class="cost-card">
-      <div class="cost-card-head">
-        <div>
-          <h3>Composição das despesas</h3>
-          <p>Principais custos de produção; o restante permanece agrupado em “Outros”</p>
-        </div>
-      </div>
-      <div id="costCompositionChart" class="cost-chart"></div>
-    </div>
-
-    <div class="cost-card">
-      <div class="cost-card-head">
-        <div>
-          <h3>Pagamento × despesas</h3>
-          <p>Comparação mensal entre valor pago do leite, despesas e saldo</p>
-        </div>
-      </div>
-      <div id="costHistoryChart" class="cost-chart"></div>
-    </div>
-  </div>
-
-  <div class="cost-card">
-    <div class="cost-card-head">
-      <div>
-        <h3>Detalhamento por categoria</h3>
-        <p>Participação no pagamento e custo por litro do período selecionado</p>
-      </div>
-    </div>
-    <div id="costCategoryTable" class="cost-table-wrap"></div>
-  </div>
-
-  <div class="cost-card">
-    <div class="cost-card-head">
-      <div>
-        <h3>Itens de maior valor</h3>
-        <p>Principais despesas registradas no arquivo importado</p>
-      </div>
-    </div>
-    <div id="costItemsTable" class="cost-table-wrap"></div>
-  </div>
-
-  <div class="cost-card">
-    <div class="cost-card-head">
-      <div>
-        <h3>Itens em Outros</h3>
-        <p id="costOthersSummary">Lista automática dos itens ainda não encaixados nas categorias principais</p>
-      </div>
-      <div class="cost-head-actions">
-        <button id="toggleCostOthersBtn" class="btn" type="button">Ver itens em Outros</button>
-      </div>
-    </div>
-    <div id="costOthersWrap" class="cost-table-wrap cost-others-collapsed"></div>
-  </div>
-</section>
+<section id="simPagamento" class="page finance-protected finance-locked">
+<div class="synapse-settings-heading"><h2>Simulador Pagamento</h2><p>Projeção do pagamento de leite por volume, qualidade e premiações.</p></div>
+<label for="psFile" class="btn">Importar Projeção Leite (.xlsx)</label><input type="file" id="psFile" accept=".xlsx">
+<div class="ps-panel"><h3>Dados do pagamento</h3><div class="ps-fields" id="psParams"></div></div>
+<div id="psKpis"></div>
+<div class="ps-panel"><h3>Simular bonificações</h3><p>Edite os campos amarelos para testar um cenário. Deixe em branco para usar a média dos tanques.</p><div class="ps-fields" id="psOverrides"></div><p id="psUsed"></p><button type="button" class="btn" id="psReset">Usar médias calculadas</button></div>
+<div class="ps-panel"><h3>Médias dos três meses</h3><div class="ps-scroll"><table><thead><tr><th>Tanque</th><th>Gordura (%)</th><th>Proteína (%)</th><th>CCS (mil/mL)</th></tr></thead><tbody id="psMeans"></tbody></table></div>
+<p>Entre parênteses: leituras disponíveis de 12. Para cada indicador e tanque, uma maior e uma menor leitura são descartadas. Com menos de três leituras, não há média. A média do período dá o mesmo peso a cada tanque com média disponível; resultados com coletas faltantes são parciais.</p></div>
+<div class="ps-panel"><h3>Análises por tanque</h3><label>Tanque <select id="psTankSelect" class="select"><option value="1">Tanque 1</option><option value="2">Tanque 2</option><option value="3">Tanque 3</option></select></label><div class="ps-scroll"><table><thead><tr><th>Mês · coleta</th><th>Gordura (%)</th><th>Proteína (%)</th><th>CCS (mil/mL)</th></tr></thead><tbody id="psSamples"></tbody></table></div></div>
+<div class="ps-panel"><h3>Composição do pagamento</h3><details><summary>Editar parâmetros de premiação</summary><div class="ps-fields" id="psRates"></div></details><div class="ps-scroll"><table><thead><tr><th>Indicador</th><th>Prêmio (%)</th><th>R$/L</th><th>Total no mês</th></tr></thead><tbody id="psLines"></tbody></table></div></div>
+<footer class="synapse-page-notes"><p id="psSource"></p></footer></section>
 
 
 <section id="mapaPagamento" class="page finance-protected finance-locked">
@@ -6235,7 +6181,7 @@ document.querySelectorAll(':is(.nav,.synapse-subnav) button').forEach(button=>{
   const label=button.querySelector('.nav-text')?.textContent.trim();
   if(label){button.setAttribute('aria-label',label);button.title=label;}
 });
-const SYNAPSE_NAV_GROUPS={"insights": ["producao", "reproducao", "rebanho", "novilhas", "descartes"], "financeiro": ["centroCustos", "mapaPagamento"], "genetica": ["genomica", "classificacao", "classificacaoEvolucao", "geneticaEstoque"], "embrioes": ["embriao", "estoque"], "qualidades": ["qualidade", "cultura"], "nutricao": ["alimentacao", "dietas", "operacional"], "planejamentoRebanho": ["planejamento", "individuais", "evolucaoRebanho"]};
+const SYNAPSE_NAV_GROUPS={"insights": ["producao", "reproducao", "rebanho", "novilhas", "descartes"], "financeiro": ["mapaPagamento", "simPagamento"], "genetica": ["genomica", "classificacao", "classificacaoEvolucao", "geneticaEstoque"], "embrioes": ["embriao", "estoque"], "qualidades": ["qualidade", "cultura"], "nutricao": ["alimentacao", "dietas", "operacional"], "planejamentoRebanho": ["planejamento", "individuais", "evolucaoRebanho"]};
 const SYNAPSE_LAST_SUBPAGE={};
 function synapseSyncNavigation(page){
   const group=Object.keys(SYNAPSE_NAV_GROUPS).find(g=>SYNAPSE_NAV_GROUPS[g].includes(page));
@@ -6341,7 +6287,7 @@ let IND_LACT_SELECTED = new Set();
 
 const COLORS = ["#2f80ed","#22a06b","#8b5cf6","#e58a2e","#d84a4a"];
 
-const FINANCE_PROTECTED_PAGES=new Set(["financeiro","centroCustos","mapaPagamento"]);
+const FINANCE_PROTECTED_PAGES=new Set(["financeiro","simPagamento","mapaPagamento"]);
 let FINANCE_UNLOCKED=false;
 
 // FNV-1a da senha configurada. Evita deixar a senha em texto puro no HTML.
@@ -7455,7 +7401,7 @@ async function classificationImport(file){
   if(!file)return;try{CLASS_DATA=await classificationParseXlsx(file);CLASS_SEARCH="";CLASS_LACT_FILTER="all";CLASS_CLASS_FILTER="all";CLASS_SORT={key:"pf",dir:"desc"};renderClassification();await dashboardSaveData({silent:true});toast(`Classificação atualizada: ${CLASS_DATA.rows.length} animais.`);}catch(err){console.error(err);toast(err?.message||"Não foi possível importar a classificação.");}
 }
 
-const pageTitles = {geneticaEstoque:"Estoque",configuracoes:"Configurações",estoque:"Estoque",dietas:"Dietas",operacional:"Operacional",insights:"Insights",geral:"Visão Geral",producao:"Produção",qualidade:"Controle Leiteiro",reproducao:"Reprodução",rebanho:"Rebanho",individuais:"Previsão de Nascimentos",evolucaoRebanho:"Evolução do Rebanho",novilhas:"Novilhas",descartes:"Descartes",financeiro:"Financeiro",centroCustos:"Centro de Custos",mapaPagamento:"Mapa de Pagamento",genomica:"Visão Geral",classificacao:"Classificação",embriao:"OPU",acw:"Monitoramento ACW",climaThi:"Clima / THI",cultura:"Cultura",alimentacao:"Ácidos Graxos",benchmark:"Benchmark",planejamento:"Visão Geral",classificacaoEvolucao:"Evolução da Classificação",coleta:"Coleta"};
+const pageTitles = {simPagamento:"Simulador Pagamento",geneticaEstoque:"Estoque",configuracoes:"Configurações",estoque:"Estoque",dietas:"Dietas",operacional:"Operacional",insights:"Insights",geral:"Visão Geral",producao:"Produção",qualidade:"Controle Leiteiro",reproducao:"Reprodução",rebanho:"Rebanho",individuais:"Previsão de Nascimentos",evolucaoRebanho:"Evolução do Rebanho",novilhas:"Novilhas",descartes:"Descartes",financeiro:"Financeiro",centroCustos:"Centro de Custos",mapaPagamento:"Mapa de Pagamento",genomica:"Visão Geral",classificacao:"Classificação",embriao:"OPU",acw:"Monitoramento ACW",climaThi:"Clima / THI",cultura:"Cultura",alimentacao:"Ácidos Graxos",benchmark:"Benchmark",planejamento:"Visão Geral",classificacaoEvolucao:"Evolução da Classificação",coleta:"Coleta"};
 
 
 function indNorm(v){
@@ -13973,6 +13919,7 @@ function costItemsTable(){
   </tr>`).join("")}</tbody></table>`;
 }
 function renderCosts(){
+  if(!document.getElementById("centroCustos"))return;
   costPopulateFilters();
   costRenderKpis();
   costCompositionChart();
@@ -14731,15 +14678,15 @@ document.getElementById("thiMonthSelect").addEventListener("change",e=>{
   THI_MONTH=e.target.value;renderThi();
 });
 
-document.getElementById("costFileInput").addEventListener("change",e=>{
+document.getElementById("costFileInput")?.addEventListener("change",e=>{
   const f=e.target.files[0];
   if(f) costImportFile(f);
   e.target.value="";
 });
-document.getElementById("costMonthSelect").addEventListener("change",e=>{
+document.getElementById("costMonthSelect")?.addEventListener("change",e=>{
   COST_MONTH=e.target.value;renderCosts();
 });
-document.getElementById("toggleCostOthersBtn").addEventListener("click",()=>{
+document.getElementById("toggleCostOthersBtn")?.addEventListener("click",()=>{
   COST_OTHERS_EXPANDED=!COST_OTHERS_EXPANDED;
   costOthersTable();
 });
@@ -15032,10 +14979,70 @@ function semenInstallControls(){
   document.getElementById('semenOpenEmbryos').addEventListener('click',()=>document.querySelector('.synapse-subnav [data-page="estoque"]').click());
 }
 
+const PS_KEYS=['fat','protein','scc'],PS_NAMES=['Gordura (%)','Proteína (%)','CCS (mil/mL)'],PS_MONTHS=['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+const PS_BONUS=[['cool','Resfriamento',5],['production','Produção'],['collection','Coleta',0.0145],['storage','Estocagem',1],['flex','Flexibilidade',1],['cbt','CBT',6],['bpa','Conformidade BPA',3.5],['cryo','Crioscopia',0],['protein','Proteína'],['fat','Gordura'],['ccs','CCS',5]];
+function psInit(){const m=new Date().toLocaleDateString('sv-SE').slice(0,7);return {month:m,days:psDays(m),price:null,litres:null,fat:null,protein:null,discount:0,rates:Object.fromEntries(PS_BONUS.filter(b=>b.length===3).map(b=>[b[0],b[2]])),samples:{},source:''}}
+function psDays(m){const [y,n]=m.split('-').map(Number);return new Date(y,n,0).getDate()}
+let PAY_SIM=psInit(),psTank=1;
+function psMonths(m){const [y,n]=m.split('-').map(Number);return [-2,-1,0].map(i=>new Date(Date.UTC(y,n-1+i,1)).toISOString().slice(0,7))}
+function psKey(t,m,i,k){return [t,m,i,k].join('|')}
+function psStats(values){const a=values.filter(Number.isFinite).sort((a,b)=>a-b);return {n:a.length,avg:a.length<3?null:a.slice(1,-1).reduce((x,y)=>x+y,0)/(a.length-2)}}
+function psAnalysis(s){const tanks=[1,2,3].map(t=>Object.fromEntries(PS_KEYS.map(k=>[k,psStats(psMonths(s.month).flatMap(m=>[1,2,3,4].map(i=>s.samples[psKey(t,m,i,k)])))])));return {tanks,avg:Object.fromEntries(PS_KEYS.map(k=>{const a=tanks.map(t=>t[k].avg).filter(Number.isFinite);return [k,a.length?a.reduce((x,y)=>x+y,0)/a.length:null]}))}}
+function psCalc(s,a){const fat=s.fat??a.avg.fat,protein=s.protein??a.avg.protein,vol=s.litres===null||s.days===null?null:s.litres*s.days;
+const lines=PS_BONUS.map(([id,name])=>{const pct=id==='collection'?null:id==='production'?(s.litres===null?null:4+(s.litres-250)*0.000507608):id==='fat'?(fat===null?null:(fat-3.1)*10):id==='protein'?(protein===null?null:(protein-3)*10):s.rates[id];const per=id==='collection'?s.rates.collection:pct===null||s.price===null?null:s.price*pct/100;return {id,name,pct,per,total:per===null||vol===null?null:per*vol}});
+const per=s.price===null||lines.some(l=>l.per===null)?null:s.price+lines.reduce((n,l)=>n+l.per,0)-s.price*s.discount/100;return {lines,vol,per,total:per===null||vol===null?null:per*vol}}
+function psFmt(x,d=2){return Number.isFinite(x)?x.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d}):'—'}
+function psMoney(x,d=2){return Number.isFinite(x)?'R$ '+psFmt(x,d):'—'}
+function psInput(path,value,label,extra=''){if(path!=='days')extra+=' step="any"';return '<label>'+label+'<input type="number" min="0" data-ps="'+path+'" value="'+(Number.isFinite(value)?value:'')+'" '+extra+'></label>'}
+function psBuild(){const s=PAY_SIM;
+document.getElementById('psParams').innerHTML='<label>Mês de referência<input type="month" id="psMonth" value="'+s.month+'"></label>'+psInput('price',s.price,'Preço base (R$/L)')+psInput('litres',s.litres,'Produção diária (L)')+psInput('days',s.days,'Dias de produção','step="1" max="31"')+psInput('discount',s.discount,'Desconto sobre a base (%)');
+document.getElementById('psOverrides').innerHTML=['fat','protein'].map((k,i)=>psInput(k,s[k],PS_NAMES[i]+' simulada','max="100" placeholder="Usar média calculada"')).join('');
+document.getElementById('psRates').innerHTML=PS_BONUS.filter(b=>b.length===3).map(([k,n])=>psInput('rate.'+k,s.rates[k],n+(k==='collection'?' (R$/L)':' (%)'))).join('');
+document.getElementById('psTankSelect').value=psTank;
+document.getElementById('psSamples').innerHTML=psMonths(s.month).map(m=>[1,2,3,4].map(i=>'<tr><th scope="row">'+PS_MONTHS[Number(m.slice(5))-1]+'/'+m.slice(2,4)+' · '+i+'</th>'+PS_KEYS.map((k,j)=>{const key=psKey(psTank,m,i,k);return '<td><input aria-label="'+PS_NAMES[j]+' tanque '+psTank+' '+m+' coleta '+i+'" data-sample="'+key+'" type="number" step="any" min="0" '+(j<2?'max="100"':'')+' value="'+(s.samples[key]??'')+'"></td>'}).join('')+'</tr>').join('')).join('');psDraw()}
+function psDraw(){const s=PAY_SIM,a=psAnalysis(s),c=psCalc(s,a);
+document.getElementById('psKpis').innerHTML=[['Volume mensal',c.vol===null?'—':psFmt(c.vol,0)+' L'],['Preço com premiações e descontos',psMoney(c.per,4)+'/L'],['Pagamento mensal estimado',psMoney(c.total)]].map(([k,v])=>'<div><small>'+k+'</small><strong>'+v+'</strong></div>').join('');
+document.getElementById('psMeans').innerHTML=a.tanks.map((t,i)=>'<tr><th>Tanque '+(i+1)+'</th>'+PS_KEYS.map(k=>'<td>'+psFmt(t[k].avg,k==='scc'?1:3)+' <small>('+t[k].n+'/12)</small></td>').join('')+'</tr>').join('')+'<tr><th>Média do período</th>'+PS_KEYS.map(k=>'<td><b>'+psFmt(a.avg[k],k==='scc'?1:3)+'</b></td>').join('')+'</tr>';
+document.getElementById('psLines').innerHTML=c.lines.map(l=>'<tr><th>'+l.name+'</th><td>'+psFmt(l.pct)+'</td><td>'+psMoney(l.per,4)+'</td><td>'+psMoney(l.total)+'</td></tr>').join('')+'<tr><th>Desconto</th><td>'+psFmt(s.discount)+'</td><td>'+psMoney(s.price===null?null:-s.price*s.discount/100,4)+'</td><td>'+psMoney(c.vol===null||s.price===null?null:-s.price*s.discount/100*c.vol)+'</td></tr>';
+document.getElementById('psSource').textContent=s.source?'Planilha importada: '+s.source:'Análises e parâmetros podem ser preenchidos aqui ou importados da planilha.';
+document.getElementById('psUsed').textContent=['fat','protein'].map((k,i)=>(i?'Proteína':'Gordura')+': '+psFmt(s[k]??a.avg[k],3)+'% ('+(s[k]===null?'média dos tanques':'simulação')+')').join(' • ')}
+async function psImport(f){
+const b=await f.arrayBuffer(),e=feedZipDirectory(b),xml=async path=>{if(!e[path])throw Error('Arquivo XLSX incompleto.');return new DOMParser().parseFromString(await feedZipText(b,e[path]),'application/xml')};
+const wb=await xml('xl/workbook.xml'),rels=await xml('xl/_rels/workbook.xml.rels'),sheets=Array.from(wb.querySelectorAll('sheet')).filter(x=>/^\d{4}$/.test(x.getAttribute('name'))).sort((a,b)=>Number(b.getAttribute('name'))-Number(a.getAttribute('name')));
+const sheet=sheets[0];if(!sheet)throw Error('Não encontrei a aba com o ano da projeção.');
+const yr=Number(sheet.getAttribute('name')),rid=sheet.getAttribute('r:id'),target=Array.from(rels.querySelectorAll('Relationship')).find(r=>r.getAttribute('Id')===rid)?.getAttribute('Target');
+const doc=await xml(target?.startsWith('/')?target.slice(1):'xl/'+target),shared=e['xl/sharedStrings.xml']?Array.from((await xml('xl/sharedStrings.xml')).querySelectorAll('si'),si=>si.textContent):[],cells={};
+doc.querySelectorAll('sheetData c').forEach(c=>{const v=c.querySelector('v')?.textContent,t=c.getAttribute('t');cells[c.getAttribute('r')]=t==='s'?shared[Number(v)]:t==='inlineStr'?c.querySelector('is')?.textContent:v});
+const num=ref=>{const v=cells[ref];if(v==null||String(v).trim()==='')return null;const n=Number(String(v).replace(',','.'));if(!Number.isFinite(n)||n<0)throw Error('Valor inválido em '+ref);return n};
+if(String(cells.B1).trim().toUpperCase()!=='SIMULADOR'||!cells.B23||!cells.B24)throw Error('Use a planilha Projeção Leite, com a tabela de premiações e as análises por tanque.');
+const s=psInit(),found=[],months=new Set();s.price=num('C4');s.litres=num('C6');s.fat=num('G24');s.protein=num('G23');s.discount=Math.abs(Number(cells.D32||0));
+for(const [k,cell] of Object.entries({cool:'D15',collection:'E17',storage:'D18',flex:'D19',cbt:'D20',bpa:'D21',cryo:'D22',ccs:'D25'}))s.rates[k]=num(cell)??0;
+for(const [ref,v] of Object.entries(cells)){const t=/^TANQUE\s*([123])$/i.exec(String(v).trim());if(!t||!/^B\d+$/.test(ref))continue;const end=Number(ref.slice(1));
+for(let r=end-13;r<end;r++){const i=Number(cells['B'+r]),m=PS_MONTHS.indexOf(String(cells['J'+r]||'').trim().slice(0,3).toUpperCase())+1;if(!m||![1,2,3,4].includes(i))continue;months.add(m);
+[['C','D'],['E','F'],['H','I']].forEach(([main,alt],j)=>{const x=num(main+r)??num(alt+r);if(x!==null)found.push([+t[1],m,i,PS_KEYS[j],x])})}}
+if(!months.size)throw Error('Não encontrei os períodos dos tanques.');
+const last=[...months].sort((a,b)=>b-a).find(m=>!months.has(m%12+1))||Math.max(...months);s.month=yr+'-'+String(last).padStart(2,'0');s.days=psDays(s.month);
+const prod=num('C7');if(s.litres>0&&prod>0){const days=prod/s.litres;if(Number.isInteger(days)&&days>=1&&days<=31)s.days=days}
+for(const [t,m,i,k,v] of found)s.samples[psKey(t,(m>last?yr-1:yr)+'-'+String(m).padStart(2,'0'),i,k)]=v;
+s.source=f.name;return s}
+function psInstall(){const el=document.getElementById('simPagamento');
+el.addEventListener('input',ev=>{const x=ev.target;if(!x.hasAttribute('data-ps')&&!x.hasAttribute('data-sample'))return;if(!x.validity.valid){x.reportValidity();return}const v=x.value===''?null:x.valueAsNumber,k=x.dataset.ps;
+if(x.dataset.sample){if(v===null)delete PAY_SIM.samples[x.dataset.sample];else PAY_SIM.samples[x.dataset.sample]=v}
+else if(k.startsWith('rate.'))PAY_SIM.rates[k.slice(5)]=v??0;else PAY_SIM[k]=k==='days'?v:k==='discount'?(v??0):v;psDraw();dashboardScheduleAutosave()});
+el.addEventListener('change',async ev=>{const x=ev.target;if(x.id==='psMonth'&&/^\d{4}-\d{2}$/.test(x.value)){PAY_SIM.month=x.value;PAY_SIM.days=psDays(x.value);psBuild();dashboardScheduleAutosave()}
+if(x.id==='psTankSelect'){psTank=+x.value;psBuild()}
+if(x.id==='psFile'&&x.files[0]){try{const imported=await psImport(x.files[0]);PAY_SIM=imported;psBuild();const ok=await dashboardSaveData({silent:true});toast(ok?'Simulador importado e salvo.':'Planilha importada. Use Backup para salvar.')}catch(e){toast(e.message)}finally{x.value=''}}});
+document.getElementById('psReset').onclick=()=>{PAY_SIM.fat=PAY_SIM.protein=null;psBuild();dashboardScheduleAutosave()};psBuild()}
+function psRestore(v){if(!v||typeof v!=='object')return;const s=psInit();if(/^\d{4}-(0[1-9]|1[012])$/.test(v.month))s.month=v.month;
+for(const k of ['price','litres','discount','fat','protein','days'])if(v[k]===null||Number.isFinite(v[k])&&v[k]>=0)s[k]=v[k];
+for(const k of Object.keys(s.rates))if(Number.isFinite(v.rates?.[k])&&v.rates[k]>=0)s.rates[k]=v.rates[k];
+for(const [k,n] of Object.entries(v.samples||{}))if(/^[123]\|\d{4}-(0[1-9]|1[012])\|[1-4]\|(fat|protein|scc)$/.test(k)&&Number.isFinite(n)&&n>=0)s.samples[k]=n;
+s.source=String(v.source||'');PAY_SIM=s;psBuild()}
+
 function dashboardStatePayload(){
   return {
     schema:DASHBOARD_STORAGE_SCHEMA,
-    SEMEN_INVENTORY,
+    PAY_SIM,SEMEN_INVENTORY,
     savedAt:new Date().toISOString(),
     DATA,
     THI_SENSOR,THI_EXTERNAL,THI_EXTERNAL_STATUS,THI_LOSS_PER_POINT_ML,THI_MONTH,THI_SENSOR_FILE,
@@ -15063,6 +15070,7 @@ function dashboardApplyState(s){
     Array.isArray(s.DATA.metrics) && s.DATA.metrics.length>0
   );
   if(savedMonitorValid)DATA=s.DATA;
+  if(s.PAY_SIM)psRestore(s.PAY_SIM);
   if(s.SEMEN_INVENTORY)semenRestoreState(s.SEMEN_INVENTORY);
 
   if(Array.isArray(s.THI_SENSOR))THI_SENSOR=s.THI_SENSOR;
@@ -15501,7 +15509,7 @@ function pageExportPdf(pageId){
 }
 
 
-const PAGE_EXPORT_ALL_EXCLUDED=new Set(["geral","financeiro","centroCustos","mapaPagamento","configuracoes"]);
+const PAGE_EXPORT_ALL_EXCLUDED=new Set(["geral","financeiro","simPagamento","mapaPagamento","configuracoes"]);
 
 function pageWaitPaint(){
   return new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
@@ -16347,6 +16355,7 @@ function synapseMovePageNotes(){
   });
 }
 
+psInstall();
 semenInstallControls();
 installPageExportButtons();
 synapseMovePageNotes();
