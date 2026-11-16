@@ -61,6 +61,7 @@ if (!firebaseConfig.apiKey || !firebaseConfig.projectId ||
   let saveQueue = Promise.resolve();
   let lastSaved = "";
   let lastArchiveDay = "";
+  let migrationReady = false; // Bloqueia snapshots vazios antes da primeira restauração.
 
   async function readCurrent() {
     try {
@@ -70,6 +71,7 @@ if (!firebaseConfig.apiKey || !firebaseConfig.projectId ||
         throw new Error("Snapshot do Synapse inválido; operação interrompida.");
       }
       lastSaved = JSON.stringify(value);
+      migrationReady = true;
       return value;
     } catch (error) {
       if (error && error.code === "storage/object-not-found") return null;
@@ -80,6 +82,9 @@ if (!firebaseConfig.apiKey || !firebaseConfig.projectId ||
   function writeCurrent(payload) {
     if (!latestUser || latestUser.role !== "admin") {
       return Promise.reject(new Error("Somente o administrador pode salvar dados."));
+    }
+    if (!migrationReady) {
+      return Promise.reject(new Error("Importe primeiro o backup JSON para iniciar o banco na nuvem."));
     }
     const snapshot = JSON.stringify(payload);
     if (snapshot === lastSaved) return saveQueue;
@@ -161,7 +166,13 @@ if (!firebaseConfig.apiKey || !firebaseConfig.projectId ||
         throw new Error("Conta sem permissão no Synapse.");
       }
       latestUser = { uid: user.uid, role };
-      window.synapseCloud = { readCurrent, writeCurrent, archiveImportedFile, role };
+      window.synapseCloud = {
+        readCurrent, writeCurrent, archiveImportedFile, role,
+        authorizeFirstRestore() {
+          if (!latestUser || latestUser.role !== "admin") throw new Error("Sem autorização.");
+          migrationReady = true;
+        }
+      };
       if (!started) {
         started = true;
         if (typeof window.synapseStartDashboard !== "function") {
