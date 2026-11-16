@@ -1,0 +1,25 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isEnabled() {
+      return request.auth != null
+        && firestore.exists(/databases/(default)/documents/members/$(request.auth.uid))
+        && firestore.get(/databases/(default)/documents/members/$(request.auth.uid)).data.enabled == true;
+    }
+    function isAdmin() {
+      return isEnabled()
+        && firestore.get(/databases/(default)/documents/members/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    match /synapse/{allPaths=**} {
+      allow read: if isEnabled();
+      allow create, update: if isAdmin()
+        && request.resource.size < 50 * 1024 * 1024;
+      // Exclusão só via console ou processo administrativo auditado.
+      allow delete: if false;
+    }
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
