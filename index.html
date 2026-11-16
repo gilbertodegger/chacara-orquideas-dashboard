@@ -4287,7 +4287,23 @@ section.page > .synapse-page-notes > *{margin:0!important;width:100%;box-sizing:
 #siloMap{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}#siloTotal{font-weight:700;color:#173629}.silo-column{min-width:0;padding:14px;border:1px solid var(--line);border-radius:14px;background:white}.silo-column header{display:flex;align-items:center;justify-content:space-between;gap:4px;color:#173629}.silo-column h3{margin:0}.silo-column header b,.silo-column p{font-size:12px}.silo-column p{color:#606d65}.silo-track{display:grid;gap:3px}.silo-segment{display:flex;align-items:center;gap:12px;padding:7px 12px;min-height:48px;background:#fafbf8;border:1px solid #cbd5ce;border-radius:5px;color:#45574a;text-align:left;cursor:pointer}.silo-segment.full{background:#2f6f4e;color:white;border-color:#295e43}.silo-segment.using{background:#2f6f4e;color:white;border:2px solid #d2a323;box-shadow:inset 4px 0 #d2a323}.silo-segment.done{background:#eee;color:#555}.silo-n{font-weight:800;font-size:17px}.silo-info{display:grid;gap:2px}.silo-info b,.silo-info small{font-size:12px}.silo-segment:focus-visible{outline:3px solid #b08a2a;outline-offset:1px}
 #siloDialog{width:min(440px,94vw);padding:22px;border:1px solid #d7dfd8;border-radius:16px;color:#173629}#siloDialog::backdrop{background:#10251bb3}#siloDialog h3{margin:0}#siloDialog p{font-size:13px;line-height:1.5}.silo-dates,.silo-actions{display:flex;gap:10px;flex-wrap:wrap}.silo-dates label{display:grid;gap:5px;font-size:13px}.silo-dates input{min-width:0;padding:8px;font-size:16px;border:1px solid var(--line);border-radius:8px}#siloDialog [hidden]{display:none}#siloError{color:#963b31}
 @media(max-width:680px){#siloMap{gap:5px}.silo-column{padding:5px}.silo-column header{display:block}.silo-column h3{font-size:15px}.silo-column p{min-height:32px;font-size:11px}.silo-segment{flex-direction:column;align-items:flex-start;gap:2px;padding:5px;min-height:64px}.silo-info small,.silo-info b{font-size:10px}.silo-n{font-size:14px}}
-</style><style>.silo-column h3{overflow-wrap:anywhere}.silo-column header b{white-space:nowrap}.silo-rename{cursor:pointer;color:#24593d;background:white;border:1px solid #cbd5ce;border-radius:7px;padding:6px 9px;margin-top:7px;font:inherit;font-size:12px}#siloNameDialog{width:min(400px,92vw);border:1px solid #d7dfd8;border-radius:16px;padding:20px;color:#173629}#siloNameDialog::backdrop{background:#10251bb3}#siloNameDialog label{display:grid;gap:5px;margin:14px 0}#siloNameInput{width:100%;padding:10px;border:1px solid #cbd5ce;border-radius:8px;font-size:16px}@media print{.silo-rename{display:none}}</style></head>
+</style><style>.silo-column h3{overflow-wrap:anywhere}.silo-column header b{white-space:nowrap}.silo-rename{cursor:pointer;color:#24593d;background:white;border:1px solid #cbd5ce;border-radius:7px;padding:6px 9px;margin-top:7px;font:inherit;font-size:12px}#siloNameDialog{width:min(400px,92vw);border:1px solid #d7dfd8;border-radius:16px;padding:20px;color:#173629}#siloNameDialog::backdrop{background:#10251bb3}#siloNameDialog label{display:grid;gap:5px;margin:14px 0}#siloNameInput{width:100%;padding:10px;border:1px solid #cbd5ce;border-radius:8px;font-size:16px}@media print{.silo-rename{display:none}}</style><style id="synapseFirebaseLoginStyle">
+html.synapse-locked .app {visibility:hidden!important}
+#synapseAccess{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(160deg,#153529,#284b3b);color:#173629;font-family:Inter,system-ui,Arial,sans-serif}
+#synapseAccess[hidden]{display:none!important}
+.synapse-access-card{width:min(100%,410px);padding:30px;background:white;border-radius:19px;box-shadow:0 24px 70px #0003}
+.synapse-access-eyebrow{font-size:11px;color:#8b6b1f;font-weight:850;letter-spacing:.12em}
+.synapse-access-card h1{font-size:36px;color:#173629;margin:8px 0}
+.synapse-access-card p{font-size:13px;line-height:1.5;color:#63776c}
+.synapse-access-card form{display:grid;gap:15px;margin-top:24px}
+.synapse-access-card label{font-weight:700;font-size:12px;display:grid;gap:7px}
+.synapse-access-card input{border:1px solid #cbd7d0;border-radius:9px;padding:12px;font-size:15px;width:100%}
+.synapse-access-card button{border:0;border-radius:9px;padding:13px;background:#173629;color:white;font-size:14px;font-weight:750;cursor:pointer}
+.synapse-access-card button:disabled{opacity:.55;cursor:wait}
+#synapseAccessMessage{min-height:20px}
+</style>
+<script>document.documentElement.classList.add("synapse-locked");</script>
+</head>
 <body>
 <div class="app">
   <aside class="sidebar">
@@ -15275,6 +15291,28 @@ function dashboardLocalStorageGet(){
 }
 
 async function dashboardSaveData({silent=false}={}){
+  // No Firebase o Storage é a fonte de verdade. Não substituir por estado local.
+  if(window.synapseCloud){
+    const btn=document.getElementById("dashboardSaveDataBtn");
+    const previous=btn?.textContent||"Salvar dados";
+    if(btn&&!silent){btn.disabled=true;btn.textContent="Salvando na nuvem..."}
+    dashboardStatus("Salvando no Firebase...","saving");
+    try{
+      await window.synapseCloud.writeCurrent(dashboardStatePayload());
+      DASHBOARD_STORAGE_MODE="Firebase Storage";
+      DASHBOARD_LAST_SAVE_AT=new Date();
+      dashboardStatus("Nuvem: salvo "+dashboardTimeLabel(DASHBOARD_LAST_SAVE_AT),"saved");
+      if(!silent)toast("Dados salvos na nuvem.");
+      return true;
+    }catch(error){
+      console.error("Erro no salvamento em nuvem",error);
+      dashboardStatus("Erro ao salvar na nuvem","error");
+      if(!silent)toast("Não foi possível salvar na nuvem. Exporte um Backup JSON.");
+      return false;
+    }finally{
+      if(btn&&!silent){btn.disabled=false;btn.textContent=previous}
+    }
+  }
   const btn=document.getElementById("dashboardSaveDataBtn");
   const previous=btn?.textContent||"Salvar dados";
   if(btn && !silent){btn.disabled=true;btn.textContent="Salvando..."}
@@ -15306,6 +15344,23 @@ async function dashboardSaveData({silent=false}={}){
 }
 
 async function dashboardLoadData(){
+  if(window.synapseCloud){
+    try{
+      const payload=await window.synapseCloud.readCurrent();
+      if(!payload){
+        dashboardStatus("Nuvem sem dados • restaure o Backup JSON","");
+        return false;
+      }
+      if(!dashboardApplyState(payload))throw new Error("Snapshot inválido");
+      DASHBOARD_STORAGE_MODE="Firebase Storage";
+      DASHBOARD_LAST_SAVE_AT=payload.savedAt?new Date(payload.savedAt):null;
+      dashboardStatus("Dados restaurados do Firebase","restored");
+      return true;
+    }catch(error){
+      dashboardStatus("Erro ao carregar dados do Firebase","error");
+      throw error;
+    }
+  }
   let json=null,mode="";
   try{
     try{
@@ -15336,6 +15391,8 @@ async function dashboardLoadData(){
 }
 
 function dashboardScheduleAutosave(delay=700){
+  // Upload de snapshot completo: evitar transferências a cada tecla.
+  if(window.synapseCloud)delay=Math.max(delay,8000);
   clearTimeout(DASHBOARD_AUTOSAVE_TIMER);
   DASHBOARD_AUTOSAVE_TIMER=setTimeout(()=>dashboardSaveData({silent:true}),delay);
 }
@@ -15400,7 +15457,7 @@ async function dashboardRestoreBackupFile(file){
     dashboardRenderAllDataViews();
     await dashboardSaveData({silent:true});
     dashboardStatus("Backup restaurado","restored");
-    toast("Backup restaurado e salvo neste navegador.");
+    toast("Backup restaurado e salvo.");
   }catch(err){
     console.error(err);
     dashboardStatus("Backup inválido","error");
@@ -16397,7 +16454,7 @@ psInstall();
 semenInstallControls();
 installPageExportButtons();
 synapseMovePageNotes();
-dashboardBootstrap();
+window.synapseStartDashboard=dashboardBootstrap; // Inicializar apenas após Firebase Auth
 
 function rerenderActivePage(){
   try{
@@ -16493,6 +16550,6 @@ dashboardRenderAllDataViews=function(){const r=__v235DashboardRenderAllDataViews
 
 window.addEventListener("resize",()=>{clearTimeout(window.__v235Resize);window.__v235Resize=setTimeout(renderV235Active,220)});
 window.addEventListener("pageshow",()=>setTimeout(renderV235Active,140));
-</script>
+</script><script type="module" src="./firebase/synapse-cloud.js"></script>
 </body>
 </html>
