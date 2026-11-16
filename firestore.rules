@@ -1,0 +1,17 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // As contas são cadastradas no console, sem cadastro público.
+    // O documento members/{uid} deve ser criado por um administrador no console:
+    // { enabled: true, role: "admin" } (ou "reader").
+    match /members/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow list, create, update, delete: if false;
+    }
+
+    // Coleções adicionais devem receber regras específicas antes de serem utilizadas.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
