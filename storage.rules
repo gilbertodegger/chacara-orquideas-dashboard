@@ -11,12 +11,20 @@ service firebase.storage {
         && firestore.get(/databases/(default)/documents/members/$(request.auth.uid)).data.role == 'admin';
     }
 
-    match /synapse/{allPaths=**} {
+    match /synapse/data/current.json {
       allow read: if isEnabled();
-      allow create, update: if isAdmin()
-        && request.resource.size < 50 * 1024 * 1024;
-      // Exclusão só via console ou processo administrativo auditado.
+      allow create, update: if isAdmin() && request.resource.size < 50 * 1024 * 1024;
       allow delete: if false;
+    }
+    match /synapse/backups/{fileName} {
+      allow read: if isEnabled();
+      allow create: if isAdmin() && request.resource.size < 50 * 1024 * 1024;
+      allow update, delete: if false;
+    }
+    match /synapse/imports/{day}/{fileName} {
+      allow read: if isEnabled();
+      allow create: if isAdmin() && request.resource.size < 50 * 1024 * 1024;
+      allow update, delete: if false;
     }
     match /{allPaths=**} {
       allow read, write: if false;
