@@ -15453,9 +15453,11 @@ async function dashboardRestoreBackupFile(file){
     const parsed=JSON.parse(raw);
     const payload=parsed?.payload||parsed;
     if(!payload || !payload.DATA)throw new Error("Backup não reconhecido");
-    dashboardApplyState(payload);
+    if(!dashboardApplyState(payload))throw new Error("Backup incompatível");
+    if(window.synapseCloud)window.synapseCloud.authorizeFirstRestore();
     dashboardRenderAllDataViews();
-    await dashboardSaveData({silent:true});
+    const synced=await dashboardSaveData({silent:true});
+    if(!synced)throw new Error("Os dados foram restaurados na tela, mas falhou o envio para a nuvem.");
     dashboardStatus("Backup restaurado","restored");
     toast("Backup restaurado e salvo.");
   }catch(err){
