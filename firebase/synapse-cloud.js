@@ -90,8 +90,10 @@ if (!firebaseConfig.apiKey || !firebaseConfig.projectId ||
       lastSaved = snapshot;
       const day = new Date().toISOString().slice(0,10);
       if (lastArchiveDay !== day) {
+        const unique = (self.crypto && crypto.randomUUID) ? crypto.randomUUID() :
+          String(Date.now()) + "-" + Math.random().toString(36).slice(2);
         await uploadBytes(ref(storage, "synapse/backups/" + day + "-" +
-          latestUser.uid + ".json"), blob, {contentType: "application/json"});
+          latestUser.uid + "-" + unique + ".json"), blob, {contentType: "application/json"});
         lastArchiveDay = day;
       }
     });
@@ -154,7 +156,7 @@ if (!firebaseConfig.apiKey || !firebaseConfig.projectId ||
       const member = await getDoc(doc(db, "members", user.uid));
       const role = member.exists() && member.data().enabled === true
         ? member.data().role : null;
-      if (role !== "admin" && role !== "reader") {
+      if (role !== "admin") {
         await signOut(auth);
         throw new Error("Conta sem permissão no Synapse.");
       }
@@ -181,12 +183,6 @@ if (!firebaseConfig.apiKey || !firebaseConfig.projectId ||
         });
         (document.querySelector(".actions") || document.querySelector(".topbar") || document.body)
           .appendChild(logout);
-      }
-      if (role === "reader") {
-        showMessage("Modo leitura.");
-        // Modo leitor será habilitado apenas após validação de controles
-        // que alteram dados. O primeiro acesso operacional deve ser admin.
-        document.documentElement.dataset.synapseRole = "reader";
       }
     } catch (error) {
       started = false;
